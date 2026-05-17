@@ -11,11 +11,11 @@ dev = [
 dependencies = [
   "orcheo>=0.20.4"
 ]
-description = "Add your description here"
-name = "orcheo-examples"
+description = "Candidate AI colleagues for Orcheo."
+name = "colleague-candidates"
 readme = "README.md"
 requires-python = ">=3.12"
-url = "https://github.com/AI-Colleagues/orcheo-examples"
+url = "https://github.com/AI-Colleagues/colleague-candidates"
 version = "0.0.1"
 
 [tool.mypy]
@@ -59,7 +59,7 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["orcheo_examples"]
+known-first-party = ["colleague_candidates"]
 lines-after-imports = 2
 no-lines-before = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 

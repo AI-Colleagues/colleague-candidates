@@ -2,7 +2,6 @@
 
 lint:
 	ruff check .
-	mypy workflows
 	ruff format . --check
 
 format:

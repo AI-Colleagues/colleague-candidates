@@ -1,8 +1,18 @@
+# /// orcheo
+# name = "LinkedIn Publisher"
+# handle = "linkedin_post"
+# description = "Publishes posts to LinkedIn using vault-stored credentials."
+# config = "./config.json"
+# entrypoint = "orcheo_workflow"
+# emoji = "📣"
+# subtitle = "AI Social Media"
+# ///
+
 """LinkedIn posting workflow backed by Orcheo vault credentials."""
 
 from langgraph.graph import END, START, StateGraph
 from orcheo.graph.state import State
-from orcheo.nodes.linkedin import LinkedInPostNode
+from orcheo.nodes.connectors.linkedin import LinkedInPostNode
 
 
 def orcheo_workflow() -> StateGraph:
