@@ -1,6 +1,6 @@
 # /// orcheo
 # name = "LinkedIn Publisher"
-# handle = "linkedin_post"
+# handle = "linkedin-post"
 # description = "Publishes posts to LinkedIn using vault-stored credentials."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
@@ -15,7 +15,7 @@ from orcheo.graph.state import State
 from orcheo.nodes.connectors.linkedin import LinkedInPostNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build the LinkedIn posting workflow."""
     graph = StateGraph(State)
     graph.add_node(

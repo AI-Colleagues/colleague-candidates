@@ -4,6 +4,8 @@
 # description = "Uses WeCom and Lark plugin listeners with a shared per-channel reply."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "🏢"
+# subtitle = "Enterprise Listener"
 # notes = "Seeded from the shared WeCom and Lark listener plugin reply template."
 # [metadata]
 # template_version = "1.0.1"
@@ -38,7 +40,7 @@ from orcheo_plugin_lark_listener import LarkListenerPluginNode
 from orcheo_plugin_wecom_listener import WeComListenerPluginNode, WeComWsReplyNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a shared plugin-listener workflow for WeCom and Lark."""
     graph = StateGraph(State)
 

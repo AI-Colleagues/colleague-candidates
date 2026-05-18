@@ -1,6 +1,6 @@
 # /// orcheo
 # name = "Simple Agent"
-# handle = "simple_agent"
+# handle = "simple-agent"
 # description = "A simple AI agent workflow with a configurable model picker."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
@@ -13,7 +13,7 @@ from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a Python agent workflow with a configurable model."""
     graph = StateGraph(State)
     agent = AgentNode(

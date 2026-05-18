@@ -4,6 +4,8 @@
 # description = "Runs Gemini CLI on the current repo from the flattened ChatKit chat."
 # config = "./config.json"
 # entrypoint = "build_graph"
+# emoji = "🧑‍🚀"
+# subtitle = "AI Research Agent"
 # notes = "Seeded from the Gemini Agent template."
 # ///
 

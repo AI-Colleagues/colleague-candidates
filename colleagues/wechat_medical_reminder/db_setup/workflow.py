@@ -1,6 +1,6 @@
 # /// orcheo
 # name = "Reminder DB Setup"
-# handle = "db_setup"
+# handle = "db-setup"
 # description = "Creates the MongoDB collections and indexes for the reminder system."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"

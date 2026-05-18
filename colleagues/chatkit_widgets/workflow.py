@@ -3,6 +3,8 @@
 # handle = "chatkit-widgets"
 # description = "An agent using MCP ChatKit widget tools to render interactive UI."
 # entrypoint = "build_graph"
+# emoji = "🧑‍🎨"
+# subtitle = "Widget UI"
 # notes = "Seeded from ChatKit Widgets template (`chatkit_widgets.py`)."
 # ///
 
@@ -10,7 +12,6 @@
 
 from collections.abc import Mapping, Sequence
 from typing import Any
-from langchain_core.messages import ToolMessage
 from langgraph.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode
@@ -64,44 +65,6 @@ def widget_payload_from_tool_message(message: Any) -> Any | None:
     if not text_value:
         return None
     return text_value.strip() or None
-
-
-def print_widget_tool_messages(messages: list[Any]) -> None:
-    """Print widget payloads discovered inside ToolMessages."""
-    widget_payloads: list[tuple[str | None, str | None, Any]] = []
-    for message in messages:
-        if not (
-            isinstance(message, ToolMessage)
-            or (isinstance(message, Mapping) and message.get("type") == "tool")
-        ):
-            continue
-        widget = widget_payload_from_tool_message(message)
-        if widget is None:
-            continue
-
-        name = getattr(message, "name", None)
-        tool_call_id = getattr(message, "tool_call_id", None)
-        if isinstance(message, Mapping):
-            name = message.get("name")
-            tool_call_id = message.get("tool_call_id")
-        widget_payloads.append((name, tool_call_id, widget))
-
-    if not widget_payloads:
-        print("  No widget payloads found in ToolMessages.")
-        return
-
-    print("  Widget payloads from ToolMessages:")
-    for index, (name, tool_call_id, widget) in enumerate(widget_payloads, start=1):
-        parts = []
-        if name:
-            parts.append(f"name={name!r}")
-        if tool_call_id:
-            parts.append(f"tool_call_id={tool_call_id!r}")
-        header = " ".join(parts) or "<no ToolMessage metadata>"
-        print(f"    [{index}] {header}")
-        serialized = widget if isinstance(widget, str) else repr(widget)
-        for line in serialized.splitlines() or [serialized]:
-            print(f"      {line}")
 
 
 def build_graph(

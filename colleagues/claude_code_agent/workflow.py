@@ -4,6 +4,8 @@
 # description = "Runs Claude Code on the current repo from the flattened ChatKit chat."
 # config = "./config.json"
 # entrypoint = "build_graph"
+# emoji = "🧑‍💻"
+# subtitle = "AI Code Agent"
 # notes = "Seeded from the Claude Code Agent template."
 # ///
 

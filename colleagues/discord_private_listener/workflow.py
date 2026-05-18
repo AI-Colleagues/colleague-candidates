@@ -4,6 +4,8 @@
 # description = "Receives Discord messages, generates an agent reply, and replies back."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "🧑‍🎮"
+# subtitle = "Discord Listener"
 # notes = "Seeded from Discord Private Listener template."
 # [metadata]
 # template_version = "1.0.0"
@@ -33,7 +35,7 @@ from orcheo.nodes.connectors.discord import (
 )
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a private Discord listener workflow."""
     graph = StateGraph(State)
 

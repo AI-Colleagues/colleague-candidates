@@ -4,6 +4,8 @@
 # description = "Runs Telegram, Discord, and QQ listeners and routes a shared reply."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "🧑‍🤝‍🧑"
+# subtitle = "Shared Bot Listener"
 # notes = "Seeded from the shared private bot listener template."
 # [metadata]
 # template_version = "1.0.0"
@@ -43,7 +45,7 @@ from orcheo.nodes.connectors.telegram import (
 )
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a shared private-listener workflow for Telegram, Discord, and QQ."""
     graph = StateGraph(State)
 

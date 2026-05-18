@@ -4,6 +4,8 @@
 # description = "Receives QQ messages, generates an agent reply, and sends it back."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "🐧"
+# subtitle = "QQ Listener"
 # notes = "Seeded from QQ Private Listener template."
 # [metadata]
 # template_version = "1.0.0"
@@ -30,7 +32,7 @@ from orcheo.nodes.ai import AgentNode
 from orcheo.nodes.connectors.qq import MessageQQNode, QQBotListenerNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a private QQ listener workflow."""
     graph = StateGraph(State)
 

@@ -3,6 +3,8 @@
 # handle = "telegram-hello"
 # description = "Sends a simple Hello message to Telegram using vault placeholders."
 # entrypoint = "orcheo_workflow"
+# emoji = "🙋"
+# subtitle = "Hello World"
 # notes = "Seeded from Telegram Hello template."
 # ///
 
@@ -11,7 +13,7 @@ from orcheo.graph.state import State
 from orcheo.nodes.connectors.telegram import MessageTelegramNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a Telegram hello workflow."""
     graph = StateGraph(State)
     telegram = MessageTelegramNode(

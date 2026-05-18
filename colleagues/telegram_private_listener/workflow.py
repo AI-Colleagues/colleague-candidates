@@ -4,6 +4,8 @@
 # description = "Receives Telegram bot messages and replies with AgentNode."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "✈️"
+# subtitle = "Telegram Listener"
 # notes = "Seeded from Telegram Private Listener template."
 # [metadata]
 # template_version = "1.0.0"
@@ -33,7 +35,7 @@ from orcheo.nodes.connectors.telegram import (
 )
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a private Telegram listener workflow."""
     graph = StateGraph(State)
 

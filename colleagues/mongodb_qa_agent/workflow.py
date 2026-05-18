@@ -4,6 +4,8 @@
 # description = "An agent workflow that searches MongoDB to answer questions."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "🧑‍💼"
+# subtitle = "AI QA Assistant"
 # notes = "Seeded from MongoDB QA Agent template."
 # ///
 
@@ -86,7 +88,7 @@ def build_hybrid_search_tool_graph() -> StateGraph:
     return graph
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build the MongoDB QA agent workflow."""
     graph = StateGraph(State)
 

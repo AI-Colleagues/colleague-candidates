@@ -1,6 +1,6 @@
 # /// orcheo
 # name = "Daily Health Reminder"
-# handle = "daily_reminder"
+# handle = "daily-reminder"
 # description = "Sends daily health reminders to registered WeChat Work users."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"

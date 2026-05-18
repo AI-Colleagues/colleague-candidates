@@ -1,6 +1,6 @@
 # /// orcheo
 # name = "Medical Reminder Assistant"
-# handle = "message_handler"
+# handle = "message-handler"
 # description = "Handles WeChat Work patient chats for reminder sign-up and reporting."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"

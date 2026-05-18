@@ -4,6 +4,8 @@
 # description = "An agent with a Telegram tool subworkflow that decides what to send."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "🧑‍✈️"
+# subtitle = "AI Messenger"
 # notes = "Seeded from Telegram Agent Sender template."
 # ///
 
@@ -37,7 +39,7 @@ def build_telegram_tool_graph() -> StateGraph:
     return graph
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a Telegram agent workflow."""
     graph = StateGraph(State)
 

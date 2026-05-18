@@ -4,6 +4,8 @@
 # description = "Runs every minute via cron and sends a heartbeat to Telegram."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "🧑‍⚕️"
+# subtitle = "Uptime Monitor"
 # notes = "Seeded from Telegram Heartbeat template."
 # ///
 
@@ -13,7 +15,7 @@ from orcheo.nodes.connectors.telegram import MessageTelegramNode
 from orcheo.nodes.triggers import CronTriggerNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a cron-driven Telegram heartbeat workflow."""
     graph = StateGraph(State)
     graph.add_node(

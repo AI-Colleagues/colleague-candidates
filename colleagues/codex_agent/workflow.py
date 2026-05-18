@@ -4,6 +4,8 @@
 # description = "Runs Codex on the current repo from the flattened ChatKit chat."
 # config = "./config.json"
 # entrypoint = "build_graph"
+# emoji = "👨‍💻"
+# subtitle = "AI Coding Agent"
 # notes = "Seeded from the Codex Agent template."
 # ///
 

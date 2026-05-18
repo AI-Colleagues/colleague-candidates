@@ -4,6 +4,8 @@
 # description = "Receives WeChat messages via plugin and replies with AgentNode."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
+# emoji = "💬"
+# subtitle = "WeChat Listener"
 # notes = "Seeded from the WeChat private listener plugin template."
 # [metadata]
 # template_version = "1.0.0"
@@ -32,7 +34,7 @@ from orcheo.nodes.ai import AgentNode, AgentReplyExtractorNode
 from orcheo_plugin_wechat_listener import WechatListenerPluginNode, WechatReplyNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a private WeChat listener workflow backed by the plugin."""
     graph = StateGraph(State)
 

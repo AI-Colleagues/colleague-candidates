@@ -3,6 +3,8 @@
 # handle = "deep-agent"
 # description = "An autonomous research agent with multi-step tool use and synthesis."
 # entrypoint = "orcheo_workflow"
+# emoji = "🧑‍🔬"
+# subtitle = "Deep Research"
 # notes = "Seeded from Deep Research Agent template (`deep-agent/workflow.py`)."
 # ///
 
@@ -11,7 +13,7 @@ from orcheo.graph.state import State
 from orcheo.nodes.ai.deep_agent import DeepAgentNode
 
 
-def orcheo_workflow() -> StateGraph:
+async def orcheo_workflow() -> StateGraph:
     """Build a deep research agent workflow."""
     graph = StateGraph(State)
     agent = DeepAgentNode(
