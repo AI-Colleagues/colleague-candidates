@@ -27,13 +27,13 @@ Follow the existing Python conventions enforced by `pyproject.toml`:
 - Use 88-character lines.
 - Prefer Google-style docstrings for public functions and classes.
 - Keep imports sorted and grouped by `ruff`/`isort`.
-- Use type annotations on public functions; `mypy` rejects untyped defs.
-- Use snake_case for Python modules, functions, and colleague handles.
+- Use type annotations on public functions; `ruff` is the sole linting tool.
+- Use snake_case for Python modules and functions.
 
 Workflow metadata should stay consistent with the frontmatter keys used in existing files: `name`, `handle`, `description`, `entrypoint`, and optional `emoji`, `subtitle`, and `config`.
 
 ## Testing Guidelines
-No `tests/` directory exists today. If you add tests, place them under `tests/` and use `test_*.py` naming. Prefer focused checks around workflow assembly, config parsing, and any helper logic. Run `make lint` before opening a PR.
+No `tests/` directory exists today. If you add tests, place them under `tests/` and use `test_*.py` naming. Prefer focused checks around workflow assembly, config parsing, and any helper logic.
 
 ## Commit & Pull Request Guidelines
 Recent commits use short imperative summaries such as `Update orcheo version` and `Restructure templates into colleagues/ and add PEP 723 frontmatter`. Keep commits narrow and descriptive.
