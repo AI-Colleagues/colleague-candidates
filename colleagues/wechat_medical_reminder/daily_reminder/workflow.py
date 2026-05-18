@@ -1,9 +1,19 @@
+# /// orcheo
+# name = "Daily Health Reminder"
+# handle = "daily-reminder"
+# description = "Sends daily health reminders to registered WeChat Work users."
+# config = "./config.json"
+# entrypoint = "orcheo_workflow"
+# emoji = "⏰"
+# subtitle = "AI Health Reminders"
+# ///
+
 """WeChat Medical Reminder - Daily Reminder workflow.
 
 Cron-triggered workflow that sends personalised health reminders to all
 active registered users daily at 9:00 AM Asia/Shanghai.
 
-Configurable inputs (workflow_config.json):
+Configurable inputs (config.json):
 - reminder_database (MongoDB database name)
 - registered_users_collection (collection for user profiles)
 
@@ -19,11 +29,14 @@ from langgraph.graph import END, StateGraph
 from orcheo.edges import Condition, IfElse
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
+from orcheo.nodes.connectors.wecom import (
+    WeComAccessTokenNode,
+    WeComCustomerServiceSendNode,
+)
 from orcheo.nodes.logic import ForLoopNode
 from orcheo.nodes.mongodb import MongoDBFindNode
 from orcheo.nodes.storage import GraphStoreAppendMessageNode
 from orcheo.nodes.triggers import CronTriggerNode
-from orcheo.nodes.wecom import WeComAccessTokenNode, WeComCustomerServiceSendNode
 
 
 class PrepareMessageNode(TaskNode):

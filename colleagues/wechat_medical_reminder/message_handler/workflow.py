@@ -1,9 +1,19 @@
+# /// orcheo
+# name = "Medical Reminder Assistant"
+# handle = "message-handler"
+# description = "Handles WeChat Work patient chats for reminder sign-up and reporting."
+# config = "./config.json"
+# entrypoint = "orcheo_workflow"
+# emoji = "💊"
+# subtitle = "AI Patient Support"
+# ///
+
 """WeChat Medical Reminder - Message Handler workflow.
 
 Webhook-triggered workflow that handles user registration, deregistration,
 and status reporting via an AI agent with MongoDB tools.
 
-Configurable inputs (workflow_config.json):
+Configurable inputs (config.json):
 - reminder_database (MongoDB database name)
 - registered_users_collection (collection for user profiles)
 - user_records_collection (collection for status reports)
@@ -25,14 +35,14 @@ from orcheo.edges import Condition, IfElse
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode, AgentReplyExtractorNode
 from orcheo.nodes.base import TaskNode
-from orcheo.nodes.mongodb import MongoDBFindNode
-from orcheo.nodes.triggers import WebhookTriggerNode
-from orcheo.nodes.wecom import (
+from orcheo.nodes.connectors.wecom import (
     WeComAccessTokenNode,
     WeComCustomerServiceSendNode,
     WeComCustomerServiceSyncNode,
     WeComEventsParserNode,
 )
+from orcheo.nodes.mongodb import MongoDBFindNode
+from orcheo.nodes.triggers import WebhookTriggerNode
 
 
 AGENT_INSTRUCTIONS = """\

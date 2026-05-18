@@ -1,3 +1,13 @@
+# /// orcheo
+# name = "Reminder DB Setup"
+# handle = "db-setup"
+# description = "Creates the MongoDB collections and indexes for the reminder system."
+# config = "./config.json"
+# entrypoint = "orcheo_workflow"
+# emoji = "🗄️"
+# subtitle = "AI Setup Utility"
+# ///
+
 """WeChat Medical Reminder - DB Setup workflow.
 
 Admin workflow to create the required MongoDB database, collections, and
@@ -5,7 +15,7 @@ indexes for the WeChat Medical Reminder system. Running this workflow is
 idempotent — re-running it is safe because ``create_index`` is a no-op
 when the index already exists.
 
-Configurable inputs (workflow_config.json):
+Configurable inputs (config.json):
 - reminder_database (MongoDB database name)
 - registered_users_collection (collection for user profiles)
 - user_records_collection (collection for status reports)
