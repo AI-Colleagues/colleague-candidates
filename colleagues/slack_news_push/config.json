@@ -1,0 +1,9 @@
+{
+  "configurable": {
+    "channel_id": "C0946SY4TTM",
+    "collection": "rss_feeds",
+    "database": "AIC",
+    "item_limit": 20,
+    "team_id": "T094FKCNZ9S"
+  }
+}
