@@ -4,7 +4,7 @@
 # description = "Ensures MongoDB Atlas text and vector search indexes exist."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🗄️"
+# emoji = "🧑‍💻"
 # subtitle = "Search Infrastructure"
 # ///
 
