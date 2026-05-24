@@ -1,0 +1,22 @@
+{
+  "configurable": {
+    "database": "my_database",
+    "collection": "my_collection",
+    "fields": {
+      "type": "object",
+      "title": "Atlas Search field mappings",
+      "description": "JSON field map passed into the text index definition.",
+      "default": {
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "dimensions": 512,
+    "vector_path": "embedding"
+  }
+}
