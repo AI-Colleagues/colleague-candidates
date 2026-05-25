@@ -27,7 +27,7 @@ from orcheo.nodes.storage.mongodb import (
 
 
 async def orcheo_workflow() -> StateGraph:
-    """Build a workflow for index setup and hybrid search."""
+    """Build a workflow to ensure text and vector search indexes exist."""
     text_index = MongoDBEnsureSearchIndexNode(
         name="ensure_text_index",
         database="{{config.configurable.database}}",
@@ -35,6 +35,7 @@ async def orcheo_workflow() -> StateGraph:
         definition={
             "mappings": {
                 "dynamic": False,
+                # Nested template values are resolved recursively by Orcheo.
                 "fields": "{{config.configurable.fields}}",
             }
         },
