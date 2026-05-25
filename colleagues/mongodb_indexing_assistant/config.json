@@ -1,0 +1,38 @@
+{
+  "configurable": {
+    "database": {
+      "type": "string",
+      "description": "MongoDB database name that contains the indexed collection.",
+      "default": "my_database"
+    },
+    "collection": {
+      "type": "string",
+      "description": "MongoDB collection name used for both text and vector index creation.",
+      "default": "my_collection"
+    },
+    "fields": {
+      "type": "object",
+      "title": "Atlas Search field mappings",
+      "description": "JSON field map passed into the Atlas Search text index definition.",
+      "default": {
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "dimensions": {
+      "type": "integer",
+      "description": "Embedding vector dimension count expected by the vector search index.",
+      "default": 512
+    },
+    "vector_path": {
+      "type": "string",
+      "description": "Document field path that stores the embedding vector.",
+      "default": "embedding"
+    }
+  }
+}
