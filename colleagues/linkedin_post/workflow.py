@@ -4,7 +4,7 @@
 # description = "Publishes posts to LinkedIn using vault-stored credentials."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "📣"
+# avatar = "avatar-06"
 # subtitle = "AI Social Media"
 # ///
 

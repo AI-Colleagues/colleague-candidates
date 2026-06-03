@@ -4,7 +4,7 @@
 # description = "Sends daily health reminders to registered WeChat Work users."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "⏰"
+# avatar = "avatar-01"
 # subtitle = "AI Health Reminders"
 # ///
 

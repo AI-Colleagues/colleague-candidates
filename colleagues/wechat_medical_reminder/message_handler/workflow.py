@@ -4,7 +4,7 @@
 # description = "Handles WeChat Work patient chats for reminder sign-up and reporting."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "💊"
+# avatar = "avatar-02"
 # subtitle = "AI Patient Support"
 # ///
 

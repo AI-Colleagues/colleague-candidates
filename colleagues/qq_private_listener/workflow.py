@@ -4,7 +4,7 @@
 # description = "Receives QQ messages, generates an agent reply, and sends it back."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🐧"
+# avatar = "avatar-10"
 # subtitle = "QQ Listener"
 # notes = "Seeded from QQ Private Listener template."
 # [metadata]

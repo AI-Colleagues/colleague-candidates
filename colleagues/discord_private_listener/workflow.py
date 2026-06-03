@@ -4,7 +4,7 @@
 # description = "Receives Discord messages, generates an agent reply, and replies back."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🧑‍🎮"
+# avatar = "avatar-09"
 # subtitle = "Discord Listener"
 # notes = "Seeded from Discord Private Listener template."
 # [metadata]

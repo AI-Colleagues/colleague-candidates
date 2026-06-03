@@ -4,7 +4,7 @@
 # description = "Runs Telegram, Discord, and QQ listeners and routes a shared reply."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🧑‍🤝‍🧑"
+# avatar = "avatar-15"
 # subtitle = "Shared Bot Listener"
 # notes = "Seeded from the shared private bot listener template."
 # [metadata]

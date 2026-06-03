@@ -12,7 +12,7 @@ Each colleague lives in its own directory under `colleagues/` containing:
 
 - `workflow.py` — the workflow definition, prefixed with a `# /// orcheo`
   frontmatter block (`name`, `handle`, `description`, `entrypoint`, and
-  optional `emoji` / `subtitle` / `notes` / `[metadata]`).
+  optional `avatar` / `subtitle` / `notes` / `[metadata]`).
 - `config.json` — an optional companion runnable config.
 
 The Canvas Candidates tab reads every colleague from the `main` branch of

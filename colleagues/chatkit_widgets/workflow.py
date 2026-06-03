@@ -3,7 +3,7 @@
 # handle = "chatkit-widgets"
 # description = "An agent using MCP ChatKit widget tools to render interactive UI."
 # entrypoint = "build_graph"
-# emoji = "🧑‍🎨"
+# avatar = "avatar-08"
 # subtitle = "Widget UI"
 # notes = "Seeded from ChatKit Widgets template (`chatkit_widgets.py`)."
 # ///

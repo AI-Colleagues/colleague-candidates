@@ -4,7 +4,7 @@
 # description = "An agent workflow that searches MongoDB to answer questions."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🧑‍💼"
+# avatar = "avatar-16"
 # subtitle = "AI QA Assistant"
 # notes = "Seeded from MongoDB QA Agent template."
 # ///

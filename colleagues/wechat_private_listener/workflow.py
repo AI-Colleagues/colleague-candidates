@@ -4,7 +4,7 @@
 # description = "Receives WeChat messages via plugin and replies with AgentNode."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "💬"
+# avatar = "avatar-21"
 # subtitle = "WeChat Listener"
 # notes = "Seeded from the WeChat private listener plugin template."
 # [metadata]

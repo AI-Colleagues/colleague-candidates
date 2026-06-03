@@ -4,7 +4,7 @@
 # description = "Runs every minute via cron and sends a heartbeat to Telegram."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🧑‍⚕️"
+# avatar = "avatar-07"
 # subtitle = "Uptime Monitor"
 # notes = "Seeded from Telegram Heartbeat template."
 # ///

@@ -4,7 +4,7 @@
 # description = "A simple AI agent workflow with a configurable model picker."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🤖"
+# avatar = "avatar-20"
 # subtitle = "AI Assistant"
 # ///
 

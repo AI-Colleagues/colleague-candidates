@@ -4,7 +4,7 @@
 # description = "Creates the MongoDB collections and indexes for the reminder system."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🗄️"
+# avatar = "avatar-03"
 # subtitle = "AI Setup Utility"
 # ///
 

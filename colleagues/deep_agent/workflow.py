@@ -3,7 +3,7 @@
 # handle = "deep-agent"
 # description = "An autonomous research agent with multi-step tool use and synthesis."
 # entrypoint = "orcheo_workflow"
-# emoji = "🧑‍🔬"
+# avatar = "avatar-11"
 # subtitle = "Deep Research"
 # notes = "Seeded from Deep Research Agent template (`deep-agent/workflow.py`)."
 # ///

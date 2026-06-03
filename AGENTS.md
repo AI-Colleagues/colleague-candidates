@@ -30,7 +30,7 @@ Follow the existing Python conventions enforced by `pyproject.toml`:
 - Use type annotations on public functions; `ruff` is the sole linting tool.
 - Use snake_case for Python modules and functions.
 
-Workflow metadata should stay consistent with the frontmatter keys used in existing files: `name`, `handle`, `description`, `entrypoint`, and optional `emoji`, `subtitle`, and `config`.
+Workflow metadata should stay consistent with the frontmatter keys used in existing files: `name`, `handle`, `description`, `entrypoint`, and optional `avatar`, `subtitle`, and `config`.
 
 ## Testing Guidelines
 No `tests/` directory exists today. If you add tests, place them under `tests/` and use `test_*.py` naming. Prefer focused checks around workflow assembly, config parsing, and any helper logic.

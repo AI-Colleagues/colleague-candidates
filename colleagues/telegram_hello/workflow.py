@@ -3,7 +3,7 @@
 # handle = "telegram-hello"
 # description = "Sends a simple Hello message to Telegram using vault placeholders."
 # entrypoint = "orcheo_workflow"
-# emoji = "🙋"
+# avatar = "avatar-19"
 # subtitle = "Hello World"
 # notes = "Seeded from Telegram Hello template."
 # ///

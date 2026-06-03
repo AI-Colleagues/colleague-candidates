@@ -4,7 +4,7 @@
 # description = "Uses WeCom and Lark plugin listeners with a shared per-channel reply."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🏢"
+# avatar = "avatar-04"
 # subtitle = "Enterprise Listener"
 # notes = "Seeded from the shared WeCom and Lark listener plugin reply template."
 # [metadata]

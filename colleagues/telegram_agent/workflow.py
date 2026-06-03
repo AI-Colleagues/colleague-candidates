@@ -4,7 +4,7 @@
 # description = "An agent with a Telegram tool subworkflow that decides what to send."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🧑‍✈️"
+# avatar = "avatar-12"
 # subtitle = "AI Messenger"
 # notes = "Seeded from Telegram Agent Sender template."
 # ///

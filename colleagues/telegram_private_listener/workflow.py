@@ -4,7 +4,7 @@
 # description = "Receives Telegram bot messages and replies with AgentNode."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "✈️"
+# avatar = "avatar-18"
 # subtitle = "Telegram Listener"
 # notes = "Seeded from Telegram Private Listener template."
 # [metadata]
