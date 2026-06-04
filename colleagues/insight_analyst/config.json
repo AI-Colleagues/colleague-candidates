@@ -1,0 +1,11 @@
+{
+  "configurable": {
+    "ai_model": "openai:gpt-5.4-mini",
+    "batch_size": 25,
+    "per_turn_batch_budget": 1000,
+    "quotes_per_theme": 3,
+    "research_objective": "",
+    "segment_variables": "",
+    "seed_codebook": null
+  }
+}
