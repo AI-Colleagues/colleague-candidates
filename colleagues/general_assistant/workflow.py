@@ -19,7 +19,7 @@ async def orcheo_workflow() -> StateGraph:
     agent = AgentNode(
         name="ai_agent",
         ai_model="{{config.configurable.ai_model}}",
-        system_prompt="You are a helpful assistant for workflow demos.",
+        system_prompt="{{config.configurable.system_prompt}}",
         model_kwargs={"api_key": "[[openai_api_key]]"},
     )
     graph.add_node("ai_agent", agent)

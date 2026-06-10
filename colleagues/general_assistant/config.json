@@ -7,7 +7,15 @@
         "openai:gpt-5.4-mini"
       ],
       "title": "Model",
+      "description": "The AI model to use for the agent.",
       "default": "openai:gpt-4.1-mini"
+    },
+    "system_prompt": {
+      "type": "string",
+      "format": "textarea",
+      "title": "System Prompt",
+      "description": "The system prompt for the agent.",
+      "default": "You are a helpful assistant that can use widget tools to interact with the user."
     }
   }
 }

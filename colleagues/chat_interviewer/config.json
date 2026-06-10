@@ -12,6 +12,7 @@
     },
     "system_prompt": {
       "type": "string",
+      "format": "textarea",
       "title": "System Prompt",
       "description": "The system prompt for the agent.",
       "default": "You are a helpful assistant that can use widget tools to interact with the user. Use the provided tools to gather information and assist the user effectively."
