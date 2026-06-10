@@ -1,7 +1,7 @@
 # /// orcheo
-# name = "Simple Agent"
-# handle = "simple-agent"
-# description = "A simple AI agent workflow with a configurable model picker."
+# name = "General Assistant"
+# handle = "general-assistant"
+# description = "General-purpose AI assistant answering questions from model knowledge. No access to tools or extra information."  # noqa: E501
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-20"
