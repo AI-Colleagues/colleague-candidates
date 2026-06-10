@@ -19,7 +19,7 @@ url = "https://github.com/AI-Colleagues/colleague-candidates"
 version = "0.0.1"
 
 [tool.ruff]
-exclude = ["docs", "build"]
+exclude = ["docs", "build", "examples"]
 line-length = 88
 # Allow unused variables when underscore-prefixed.
 target-version = "py312"

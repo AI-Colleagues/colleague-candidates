@@ -1,0 +1,8 @@
+{
+  "configurable": {
+    "corp_id": "YOUR_WECOM_CORP_ID",
+    "chat_id": "YOUR_WECOM_CHAT_ID",
+    "agent_id": 1000002,
+    "message_template": "Hello from Orcheo! This is a scripted message."
+  }
+}
