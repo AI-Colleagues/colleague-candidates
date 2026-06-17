@@ -1,12 +1,12 @@
 # /// orcheo
-# name = "MongoDB QA Agent"
-# handle = "mongodb-qa-agent"
-# description = "An agent workflow that searches MongoDB to answer questions."
+# name = "Knowledge Guide"
+# handle = "knowledge-guide"
+# description = "Answer questions by running hybrid search over MongoDB."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-16"
 # subtitle = "AI QA Assistant"
-# notes = "Seeded from MongoDB QA Agent template."
+# notes = "Seeded from Knowledge Guide template."
 # ///
 
 from langgraph.graph import END, START, StateGraph
@@ -89,7 +89,7 @@ def build_hybrid_search_tool_graph() -> StateGraph:
 
 
 async def orcheo_workflow() -> StateGraph:
-    """Build the MongoDB QA agent workflow."""
+    """Build the Knowledge Guide agent workflow."""
     graph = StateGraph(State)
 
     agent_node = AgentNode(

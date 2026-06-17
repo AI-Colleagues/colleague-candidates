@@ -1,14 +1,14 @@
 # /// orcheo
-# name = "MongoDB Indexing Assistant"
-# handle = "mongodb-indexing-assistant"
-# description = "Ensures MongoDB Atlas text and vector search indexes exist."
+# name = "Index Steward"
+# handle = "index-steward"
+# description = "Ensure MongoDB Atlas text and vector search indexes exist."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-14"
 # subtitle = "Search Infrastructure"
 # ///
 
-"""MongoDB Atlas Search example workflow.
+"""Index Steward workflow for MongoDB Atlas Search.
 
 Configurable inputs (config.json):
 - database: MongoDB database name
