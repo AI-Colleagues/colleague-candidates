@@ -22,12 +22,12 @@ Configurable inputs (config.json):
 
 from langgraph.graph import END, START, StateGraph
 from orcheo.graph.state import State
-from orcheo.nodes.conversational_search import (
+from orcheo.nodes.rag import (
     ChunkEmbeddingNode,
     ChunkingStrategyNode,
     WebDocumentLoaderNode,
 )
-from orcheo.nodes.integrations.databases.mongodb import MongoDBInsertManyNode
+from orcheo.nodes.storage.mongodb import MongoDBInsertManyNode
 
 
 async def orcheo_workflow() -> StateGraph:

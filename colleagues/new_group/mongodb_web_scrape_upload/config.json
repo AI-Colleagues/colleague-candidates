@@ -1,20 +1,53 @@
 {
   "configurable": {
-    "ai_model": "openai:gpt-4o-mini",
-    "database": "AIC",
-    "collection": "dutch_universities",
-    "text_paths": ["title", "body"],
-    "vector_path": "embedding",
-    "embed_model": "openai:text-embedding-3-small",
-    "dimensions": 512,
-    "system_prompt": "You are a helpful QA assistant over a MongoDB collection. For each question, call the mongodb_hybrid_search tool with the user's question as the query. The tool returns markdown in `results.format_results.markdown`. Use that markdown to answer the user. If the search results are empty or unrelated, say you do not know.",
-    "urls": [
-      {
-        "url": "https://www.uva.nl/en/shared-content/faculteiten/en/faculteit-der-natuurwetenschappen-wiskunde-en-informatica/news/2026/02/bringing-business-and-science-together-at-the-deep-tech-day.html"
+    "database": {
+      "type": "string",
+      "title": "MongoDB Database",
+      "description": "MongoDB database name where scraped documents will be uploaded.",
+      "default": "my_database"
+    },
+    "collection": {
+      "type": "string",
+      "title": "MongoDB Collection",
+      "description": "MongoDB collection name where scraped documents will be uploaded.",
+      "default": "my_database"
+    },
+    "vector_path": {
+      "type": "string",
+      "title": "Vector Path",
+      "description": "Document field path used to store the embedding vector.",
+      "default": "embedding"
+    },
+    "embed_model": {
+      "type": "string",
+      "title": "Embedding Model",
+      "description": "Embedding model used to vectorize scraped chunks.",
+      "default": "openai:text-embedding-3-small"
+    },
+    "dimensions": {
+      "type": "integer",
+      "title": "Embedding Dimensions",
+      "description": "Embedding vector dimension count expected by the vector search index.",
+      "default": 512
+    },
+    "urls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": ["url"]
       },
-      {
-        "url": "https://www.uva.nl/en/content/news/press-releases/2026/01/uva-welcomes-vinod-subramaniam-as-new-president.html"
-      }
-    ]
+      "title": "URLs",
+      "description": "Web pages to scrape and upload into MongoDB.",
+      "default": [
+        {
+          "url": "https://www.example.com"
+        }
+      ]
+    }
   }
 }
