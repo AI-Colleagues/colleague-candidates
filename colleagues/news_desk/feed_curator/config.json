@@ -1,0 +1,49 @@
+{
+  "configurable": {
+    "mongodb_database": {
+      "type": "string",
+      "title": "MongoDB Database",
+      "description": "MongoDB database that stores the RSS feed entries.",
+      "default": "AIC"
+    },
+    "mongodb_collection": {
+      "type": "string",
+      "title": "MongoDB Collection",
+      "description": "MongoDB collection that stores the RSS feed entries.",
+      "default": "rss_feeds"
+    },
+    "rss_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "RSS Sources",
+      "description": "RSS/Atom feed URLs to pull updates from.",
+      "default": [
+        "https://news.ycombinator.com/rss",
+        "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+        "https://openai.com/blog/rss.xml",
+        "https://openai.com/news/rss.xml",
+        "https://simonwillison.net/atom/everything/",
+        "https://feeds.arstechnica.com/arstechnica/gadgets",
+        "https://techcrunch.com/feed",
+        "https://rss.beehiiv.com/feeds/2R3C6Bt5wj.xml",
+        "https://news.yahoo.com/rss/tech",
+        "https://www.jiqizhixin.com/rss",
+        "https://www.qbitai.com/feed",
+        "https://every.to/chain-of-thought/feed.xml",
+        "https://deepmind.google/blog/rss.xml",
+        "https://eugeneyan.com/rss/",
+        "https://huyenchip.com/feed",
+        "https://www.oneusefulthing.org/feed",
+        "https://www.normaltech.ai/feed",
+        "https://www.latent.space/feed",
+        "https://news.smol.ai/rss.xml",
+        "https://www.dwarkesh.com/feed",
+        "https://www.lesswrong.com/feed.xml",
+        "https://www.alignmentforum.org/feed.xml",
+        "https://generative.ink/posts/index.xml"
+      ]
+    }
+  }
+}
