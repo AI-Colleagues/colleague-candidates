@@ -4,7 +4,6 @@
 # description = "Post a Slack news digest from MongoDB on mention and cron triggers."
 # config = "./config.json"
 # entrypoint = "build_graph"
-# emoji = "📰"
 # subtitle = "News Digest"
 # ///
 
