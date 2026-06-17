@@ -1,32 +1,33 @@
 # /// orcheo
-# name = "MongoDB Create Index"
-# handle = "mongodb-create-index"
-# description = "Create MongoDB Atlas search and vector indexes for hybrid search."
+# name = "Index Steward"
+# handle = "index-steward"
+# description = "Ensure MongoDB Atlas text and vector search indexes exist."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🗂️"
-# subtitle = "Index Setup"
+# avatar = "avatar-14"
+# subtitle = "Search Infrastructure"
 # ///
 
-"""MongoDB Atlas Search example workflow.
+"""Index Steward workflow for MongoDB Atlas Search.
 
 Configurable inputs (config.json):
 - database: MongoDB database name
 - collection: MongoDB collection name
-- text_query: Full-text search query
+- fields: Atlas Search field mappings for the text index
+- dimensions: Vector embedding dimensions
 - vector_path: Document field containing vector embeddings
 """
 
 from langgraph.graph import END, START, StateGraph
 from orcheo.graph.state import State
-from orcheo.nodes.integrations.databases.mongodb import (
+from orcheo.nodes.storage.mongodb import (
     MongoDBEnsureSearchIndexNode,
     MongoDBEnsureVectorIndexNode,
 )
 
 
 async def orcheo_workflow() -> StateGraph:
-    """Build a workflow for index setup and hybrid search."""
+    """Build a workflow to ensure text and vector search indexes exist."""
     text_index = MongoDBEnsureSearchIndexNode(
         name="ensure_text_index",
         database="{{config.configurable.database}}",
@@ -34,10 +35,8 @@ async def orcheo_workflow() -> StateGraph:
         definition={
             "mappings": {
                 "dynamic": False,
-                "fields": {
-                    "title": {"type": "string"},
-                    "body": {"type": "string"},
-                },
+                # Nested template values are resolved recursively by Orcheo.
+                "fields": "{{config.configurable.fields}}",
             }
         },
         mode="ensure_or_update",

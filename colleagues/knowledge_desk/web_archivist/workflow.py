@@ -1,14 +1,14 @@
 # /// orcheo
-# name = "MongoDB Web Scrape & Upload"
-# handle = "mongodb-web-scrape-upload"
-# description = "Scrape web pages and upload embedded documents into MongoDB."
+# name = "Web Archivist"
+# handle = "web-archivist"
+# description = "Scrape web pages, embed chunks, and upload documents into MongoDB."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🕸️"
+# avatar = "avatar-11"
 # subtitle = "Data Ingestion"
 # ///
 
-"""Web scraping and MongoDB vector upload workflow.
+"""Web Archivist workflow for MongoDB-backed retrieval.
 
 Scrapes given web pages, chunks the body text, generates vector embeddings,
 and uploads the results to a MongoDB collection with source URL metadata.
@@ -22,12 +22,12 @@ Configurable inputs (config.json):
 
 from langgraph.graph import END, START, StateGraph
 from orcheo.graph.state import State
-from orcheo.nodes.conversational_search import (
+from orcheo.nodes.rag import (
     ChunkEmbeddingNode,
     ChunkingStrategyNode,
     WebDocumentLoaderNode,
 )
-from orcheo.nodes.integrations.databases.mongodb import MongoDBInsertManyNode
+from orcheo.nodes.storage.mongodb import MongoDBInsertManyNode
 
 
 async def orcheo_workflow() -> StateGraph:

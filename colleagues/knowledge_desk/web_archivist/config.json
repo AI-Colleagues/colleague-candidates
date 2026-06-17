@@ -1,0 +1,53 @@
+{
+  "configurable": {
+    "database": {
+      "type": "string",
+      "title": "MongoDB Database",
+      "description": "MongoDB database name where scraped documents will be uploaded.",
+      "default": "my_database"
+    },
+    "collection": {
+      "type": "string",
+      "title": "MongoDB Collection",
+      "description": "MongoDB collection name where scraped documents will be uploaded.",
+      "default": "my_collection"
+    },
+    "vector_path": {
+      "type": "string",
+      "title": "Vector Path",
+      "description": "Document field path used to store the embedding vector.",
+      "default": "embedding"
+    },
+    "embed_model": {
+      "type": "string",
+      "title": "Embedding Model",
+      "description": "Embedding model used to vectorize scraped chunks.",
+      "default": "openai:text-embedding-3-small"
+    },
+    "dimensions": {
+      "type": "integer",
+      "title": "Embedding Dimensions",
+      "description": "Embedding vector dimension count expected by the vector search index.",
+      "default": 512
+    },
+    "urls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": ["url"]
+      },
+      "title": "URLs",
+      "description": "Web pages to scrape and upload into MongoDB.",
+      "default": [
+        {
+          "url": "https://www.example.com"
+        }
+      ]
+    }
+  }
+}

@@ -1,29 +1,23 @@
 # /// orcheo
-# name = "MongoDB QA Agent (Example)"
-# handle = "mongodb-agent-qa"
-# description = "Answer questions with hybrid search over a MongoDB collection."
+# name = "Knowledge Guide"
+# handle = "knowledge-guide"
+# description = "Answer questions by running hybrid search over MongoDB."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🧑‍💼"
+# avatar = "avatar-16"
 # subtitle = "AI QA Assistant"
+# notes = "Seeded from Knowledge Guide template."
 # ///
-
-"""ChatKit agent workflow.
-
-This workflow exposes a single AgentNode suitable for ChatKit's public UI.
-ChatKit sends message/history payloads; the AgentNode normalizes them into
-LangChain messages and generates a reply.
-"""
 
 from langgraph.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode
-from orcheo.nodes.conversational_search import (
+from orcheo.nodes.rag import (
     SearchResultAdapterNode,
     SearchResultFormatterNode,
     TextEmbeddingNode,
 )
-from orcheo.nodes.integrations.databases.mongodb import MongoDBHybridSearchNode
+from orcheo.nodes.storage.mongodb import MongoDBHybridSearchNode
 from pydantic import BaseModel, Field
 
 
@@ -34,11 +28,7 @@ class HybridSearchInput(BaseModel):
 
 
 def build_hybrid_search_tool_graph() -> StateGraph:
-    """Build a subworkflow used as an agent tool.
-
-    The formatter writes its markdown output under ``results.format_results``,
-    so the parent tool selects that nested field via ``output_path``.
-    """
+    """Build a subworkflow used as an agent tool."""
     graph = StateGraph(State)
     graph.add_node(
         "query_embedding",
@@ -99,7 +89,7 @@ def build_hybrid_search_tool_graph() -> StateGraph:
 
 
 async def orcheo_workflow() -> StateGraph:
-    """Build the ChatKit agent workflow."""
+    """Build the Knowledge Guide agent workflow."""
     graph = StateGraph(State)
 
     agent_node = AgentNode(

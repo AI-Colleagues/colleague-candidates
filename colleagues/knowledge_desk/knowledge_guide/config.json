@@ -1,0 +1,61 @@
+{
+  "configurable": {
+    "ai_model": {
+      "type": "string",
+      "enum": [
+        "openai:gpt-4o-mini",
+        "openai:gpt-4.1-mini",
+        "openai:gpt-5.4-mini"
+      ],
+      "title": "Model",
+      "description": "The AI model to use for the QA agent.",
+      "default": "openai:gpt-4o-mini"
+    },
+    "database": {
+      "type": "string",
+      "title": "MongoDB Database",
+      "description": "MongoDB database name that contains the indexed collection.",
+      "default": "my_database"
+    },
+    "collection": {
+      "type": "string",
+      "title": "MongoDB Collection",
+      "description": "MongoDB collection name to search.",
+      "default": "my_collection"
+    },
+    "text_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Text Paths",
+      "description": "Document field paths included in Atlas Search text matching.",
+      "default": ["title", "body"]
+    },
+    "vector_path": {
+      "type": "string",
+      "title": "Vector Path",
+      "description": "Document field path that stores the embedding vector.",
+      "default": "embedding"
+    },
+    "embed_model": {
+      "type": "string",
+      "title": "Embedding Model",
+      "description": "Embedding model used to vectorize user questions.",
+      "default": "openai:text-embedding-3-small"
+    },
+    "dimensions": {
+      "type": "integer",
+      "title": "Embedding Dimensions",
+      "description": "Embedding vector dimension count used by the collection index.",
+      "default": 512
+    },
+    "system_prompt": {
+      "type": "string",
+      "format": "textarea",
+      "title": "System Prompt",
+      "description": "The system prompt for the QA agent.",
+      "default": "You are a helpful QA assistant over a MongoDB collection. For each question, call the mongodb_hybrid_search tool with the user's question as the query. The tool returns markdown in `results.format_results.markdown`. Use that markdown to answer the user. If the search results are empty or unrelated, say you do not know."
+    }
+  }
+}
