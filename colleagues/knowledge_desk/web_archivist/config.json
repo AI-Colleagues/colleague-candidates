@@ -10,7 +10,7 @@
       "type": "string",
       "title": "MongoDB Collection",
       "description": "MongoDB collection name where scraped documents will be uploaded.",
-      "default": "my_database"
+      "default": "my_collection"
     },
     "vector_path": {
       "type": "string",
