@@ -4,7 +4,7 @@
 # description = "Scrape web pages and upload embedded documents into MongoDB."
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
-# emoji = "🕸️"
+# avatar = "avatar-11"
 # subtitle = "Data Ingestion"
 # ///
 
