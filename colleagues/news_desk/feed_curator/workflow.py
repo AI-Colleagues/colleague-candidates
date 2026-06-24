@@ -2,6 +2,7 @@
 # name = "Feed Curator"
 # handle = "feed-curator"
 # description = "Pull curated RSS feeds and store new items in MongoDB."
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-06"

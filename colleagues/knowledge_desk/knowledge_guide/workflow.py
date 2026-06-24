@@ -2,6 +2,7 @@
 # name = "Knowledge Guide"
 # handle = "knowledge-guide"
 # description = "Answer questions by running hybrid search over MongoDB."
+# version = "0.1.0"
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-16"

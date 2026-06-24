@@ -2,6 +2,7 @@
 # name = "General Assistant"
 # handle = "general-assistant"
 # description = "General-purpose AI assistant answering questions from model knowledge. No access to tools or extra information."  # noqa: E501
+# version = "0.1.0"
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-20"

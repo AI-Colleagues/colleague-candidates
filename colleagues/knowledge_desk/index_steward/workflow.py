@@ -2,6 +2,7 @@
 # name = "Index Steward"
 # handle = "index-steward"
 # description = "Ensure MongoDB Atlas text and vector search indexes exist."
+# version = "0.1.0"
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-14"

@@ -2,6 +2,7 @@
 # name = "Chat Interviewer"
 # handle = "chat-interviewer"
 # description = "An agent for conducting chat interviews."
+# version = "0.1.0"
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-08"

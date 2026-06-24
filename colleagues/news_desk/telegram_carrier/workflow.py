@@ -2,6 +2,7 @@
 # name = "Telegram News Carrier"
 # handle = "telegram-news-carrier"
 # description = "Deliver scheduled RSS news digests through Telegram."
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # subtitle = "Scheduled delivery"

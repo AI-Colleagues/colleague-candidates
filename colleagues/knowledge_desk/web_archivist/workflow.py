@@ -2,6 +2,7 @@
 # name = "Web Archivist"
 # handle = "web-archivist"
 # description = "Scrape web pages, embed chunks, and upload documents into MongoDB."
+# version = "0.1.0"
 # config = "./config.json"
 # entrypoint = "orcheo_workflow"
 # avatar = "avatar-11"

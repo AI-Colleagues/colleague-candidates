@@ -2,6 +2,7 @@
 # name = "Insight Analyst"
 # handle = "insight-analyst"
 # description = "Turn qualitative text into an evidence-grounded insight report."
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-07"
