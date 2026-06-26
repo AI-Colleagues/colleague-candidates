@@ -32,8 +32,8 @@ from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
 from orcheo.nodes.connectors.telegram import MessageTelegram
 from orcheo.nodes.logic import ForLoopNode
-from orcheo.nodes.mongodb import MongoDBFindNode
 from orcheo.nodes.storage import GraphStoreAppendMessageNode
+from orcheo.nodes.storage.mongodb import MongoDBFindNode
 from orcheo.nodes.triggers import CronTriggerNode
 
 

@@ -1,5 +1,12 @@
 {
   "configurable": {
+    "cron_expression": {
+      "type": "string",
+      "title": "Cron Expression",
+      "description": "Cron schedule for pulling RSS feeds.",
+      "format": "cron",
+      "default": "*/30 * * * *"
+    },
     "mongodb_database": {
       "type": "string",
       "title": "MongoDB Database",

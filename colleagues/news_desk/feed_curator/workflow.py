@@ -11,8 +11,9 @@
 
 """Feed Curator: pull curated RSS feeds and store new items in MongoDB.
 
-Fetches RSS feeds from a curated list every 30 minutes,
-adds a ``read: false`` flag to each entry, and inserts them into MongoDB.
+Fetches RSS feeds from a curated list on a configurable cron schedule
+(every 30 minutes by default), adds a ``read: false`` flag to each entry,
+and inserts them into MongoDB.
 
 RSS source URLs are maintained in the companion ``config.json``
 and uploaded via ``--config-file config.json``.
@@ -21,7 +22,7 @@ and uploaded via ``--config-file config.json``.
 from langgraph.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.connectors.rss import RSSNode
-from orcheo.nodes.mongodb import MongoDBUpsertManyNode
+from orcheo.nodes.storage.mongodb import MongoDBUpsertManyNode
 from orcheo.nodes.triggers import CronTriggerNode
 
 
@@ -33,7 +34,7 @@ async def orcheo_workflow() -> StateGraph:
         "cron_trigger",
         CronTriggerNode(
             name="cron_trigger",
-            expression="*/30 * * * *",
+            expression="{{config.configurable.cron_expression}}",
         ),
     )
 
