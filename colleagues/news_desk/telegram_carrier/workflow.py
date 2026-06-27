@@ -5,18 +5,21 @@
 # version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
+# avatar = "avatar-01"
 # subtitle = "Scheduled delivery"
 # ///
 
 """News Desk - Telegram News Carrier workflow.
 
-Cron-triggered workflow that sends the latest RSS news items to all
-active subscribers via Telegram daily at 9:00 AM Amsterdam time.
+Cron-triggered workflow that sends the latest *unread* RSS news items to a
+single configured Telegram chat on a configurable schedule (daily at
+9:00 AM Amsterdam time by default) and marks the delivered items as read.
 
 Configurable inputs (config.json):
+- cron_expression (cron schedule, Europe/Amsterdam timezone)
 - rss_database (MongoDB database name)
-- subscribers_collection (collection for subscriber profiles)
 - rss_collection (collection for RSS feed items)
+- telegram_chat_id (Telegram chat that receives the digest)
 
 Orcheo vault secrets required:
 - telegram_token: Telegram bot token
@@ -27,18 +30,16 @@ import html
 from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, StateGraph
-from orcheo.edges import Condition, IfElse
+from orcheo.edges import Condition, IfElseEdge
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
 from orcheo.nodes.connectors.telegram import MessageTelegram
-from orcheo.nodes.logic import ForLoopNode
-from orcheo.nodes.storage import GraphStoreAppendMessageNode
-from orcheo.nodes.storage.mongodb import MongoDBFindNode
+from orcheo.nodes.storage.mongodb import MongoDBFindNode, MongoDBUpdateManyNode
 from orcheo.nodes.triggers import CronTriggerNode
 
 
 class FormatDigestNode(TaskNode):
-    """Format the latest RSS news items into a digest message."""
+    """Format the latest unread RSS news items into a digest message."""
 
     @staticmethod
     def decode_title(text: str | None) -> str:
@@ -50,11 +51,11 @@ class FormatDigestNode(TaskNode):
 
     @staticmethod
     def read_items(state: State) -> list[dict[str, Any]]:
-        """Extract news items from the find_latest node results."""
+        """Extract news items from the find_unread node results."""
         results = state.get("results", {})
         if not isinstance(results, dict):
             return []
-        find_result = results.get("find_latest", {})
+        find_result = results.get("find_unread", {})
         if not isinstance(find_result, dict):
             return []
         data = find_result.get("data")
@@ -63,7 +64,7 @@ class FormatDigestNode(TaskNode):
         return []
 
     async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:
-        """Return the digest content string."""
+        """Return the digest content string and the delivered item IDs."""
         items = self.read_items(state)
 
         lines = []
@@ -76,7 +77,10 @@ class FormatDigestNode(TaskNode):
                 lines.append(f"- {title}")
 
         content = "\n".join(lines) if lines else "No news updates today."
-        return {"content": f"Today's RSS News:\n\n{content}"}
+        return {
+            "content": f"Today's RSS News:\n\n{content}",
+            "ids": [item.get("_id") for item in items if item.get("_id") is not None],
+        }
 
 
 async def orcheo_workflow() -> StateGraph:
@@ -88,29 +92,21 @@ async def orcheo_workflow() -> StateGraph:
         "cron_trigger",
         CronTriggerNode(
             name="cron_trigger",
-            expression="0 9 * * *",
+            expression="{{config.configurable.cron_expression}}",
             timezone="Europe/Amsterdam",
         ),
     )
 
-    # --- Fetch data ---
+    # --- Fetch unread items ---
     graph.add_node(
-        "find_latest",
+        "find_unread",
         MongoDBFindNode(
-            name="find_latest",
+            name="find_unread",
             database="{{config.configurable.rss_database}}",
             collection="{{config.configurable.rss_collection}}",
+            filter={"read": False},
             sort={"isoDate": -1},
             limit=20,
-        ),
-    )
-    graph.add_node(
-        "find_active_subscribers",
-        MongoDBFindNode(
-            name="find_active_subscribers",
-            database="{{config.configurable.rss_database}}",
-            collection="{{config.configurable.subscribers_collection}}",
-            filter={"status": "active"},
         ),
     )
 
@@ -120,61 +116,51 @@ async def orcheo_workflow() -> StateGraph:
         FormatDigestNode(name="format_digest"),
     )
 
-    # --- ForLoop over subscribers ---
-    graph.add_node(
-        "for_each_subscriber",
-        ForLoopNode(
-            name="for_each_subscriber",
-            items="{{find_active_subscribers.data}}",
-        ),
-    )
+    # --- Deliver to the configured chat ---
     graph.add_node(
         "send_news",
         MessageTelegram(
             name="send_news",
-            chat_id="{{for_each_subscriber.current_item.chat_id}}",
+            chat_id="{{config.configurable.telegram_chat_id}}",
             message="{{format_digest.content}}",
             parse_mode="HTML",
         ),
     )
+
+    # --- Mark delivered items as read ---
     graph.add_node(
-        "persist_digest_history",
-        GraphStoreAppendMessageNode(
-            name="persist_digest_history",
-            key="telegram:{{for_each_subscriber.current_item.chat_id}}",
-            content="{{format_digest.content}}",
+        "mark_read",
+        MongoDBUpdateManyNode(
+            name="mark_read",
+            database="{{config.configurable.rss_database}}",
+            collection="{{config.configurable.rss_collection}}",
+            filter={"_id": {"$in": "{{format_digest.ids}}"}},
+            update={"$set": {"read": True}},
         ),
     )
 
     # --- Edges ---
     graph.set_entry_point("cron_trigger")
-    graph.add_edge("cron_trigger", "find_latest")
-    graph.add_edge("find_latest", "find_active_subscribers")
-    graph.add_edge("find_active_subscribers", "format_digest")
-    graph.add_edge("format_digest", "for_each_subscriber")
+    graph.add_edge("cron_trigger", "find_unread")
+    graph.add_edge("find_unread", "format_digest")
 
-    # ForLoop routes: body or done
-    loop_router = IfElse(
-        name="for_each_subscriber",
+    # Only send (and mark read) when there are unread items to deliver.
+    deliver_router = IfElseEdge(
+        name="deliver_router",
         conditions=[
-            Condition(
-                left="{{for_each_subscriber.done}}",
-                operator="is_falsy",
-            ),
+            Condition(left="{{format_digest.ids}}", operator="is_truthy"),
         ],
     )
     graph.add_conditional_edges(
-        "for_each_subscriber",
-        loop_router,
+        "format_digest",
+        deliver_router,
         {
             "true": "send_news",
             "false": END,
         },
     )
 
-    graph.add_edge("send_news", "persist_digest_history")
-
-    # After persisting history, loop back to for_each_subscriber
-    graph.add_edge("persist_digest_history", "for_each_subscriber")
+    graph.add_edge("send_news", "mark_read")
+    graph.add_edge("mark_read", END)
 
     return graph
