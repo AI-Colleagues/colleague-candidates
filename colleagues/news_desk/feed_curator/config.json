@@ -2,7 +2,7 @@
   "configurable": {
     "cron_expression": {
       "type": "string",
-      "title": "Cron Expression",
+      "title": "Schedule",
       "description": "Cron schedule for pulling RSS feeds.",
       "format": "cron",
       "default": "*/30 * * * *"
