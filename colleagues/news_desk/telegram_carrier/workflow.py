@@ -1,6 +1,6 @@
 # /// orcheo
-# name = "Telegram News Carrier"
-# handle = "telegram-news-carrier"
+# name = "Telegram Paperboy"
+# handle = "telegram-paperboy"
 # description = "Deliver scheduled RSS news digests through Telegram."
 # version = "0.1.0"
 # entrypoint = "orcheo_workflow"
@@ -9,17 +9,21 @@
 # subtitle = "Scheduled delivery"
 # ///
 
-"""News Desk - Telegram News Carrier workflow.
+"""News Desk - Telegram Paperboy workflow.
 
-Cron-triggered workflow that sends the latest *unread* RSS news items to a
-single configured Telegram chat on a configurable schedule (daily at
-9:00 AM Amsterdam time by default) and marks the delivered items as read.
+Sends the latest *unread* RSS news items through Telegram and marks the
+delivered items as read. Two entry points share the same digest flow:
+
+- Scheduled: a cron trigger (daily at 9:00 AM Amsterdam time by default)
+  broadcasts the digest to the configured ``telegram_chat_id``.
+- On demand: a managed Telegram bot listener replies to whoever messages
+  the bot with the next batch of unread news.
 
 Configurable inputs (config.json):
 - cron_expression (cron schedule, Europe/Amsterdam timezone)
 - rss_database (MongoDB database name)
 - rss_collection (collection for RSS feed items)
-- telegram_chat_id (Telegram chat that receives the digest)
+- telegram_chat_id (chat that receives the scheduled broadcast)
 
 Orcheo vault secrets required:
 - telegram_token: Telegram bot token
@@ -33,9 +37,22 @@ from langgraph.graph import END, StateGraph
 from orcheo.edges import Condition, IfElseEdge
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
-from orcheo.nodes.connectors.telegram import MessageTelegram
+from orcheo.nodes.connectors.telegram import MessageTelegram, TelegramBotListenerNode
 from orcheo.nodes.storage.mongodb import MongoDBFindNode, MongoDBUpdateManyNode
 from orcheo.nodes.triggers import CronTriggerNode
+
+
+class DetectTriggerNode(TaskNode):
+    """Detect whether the run was started by an inbound listener event."""
+
+    async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:
+        """Return whether a listener payload is present in inputs."""
+        inputs = state.get("inputs", {})
+        is_listener = bool(
+            isinstance(inputs, dict)
+            and (inputs.get("listener") or inputs.get("platform"))
+        )
+        return {"is_listener": is_listener}
 
 
 class FormatDigestNode(TaskNode):
@@ -83,17 +100,55 @@ class FormatDigestNode(TaskNode):
         }
 
 
+class ResolveTargetChatNode(TaskNode):
+    """Pick the chat that receives the digest.
+
+    Inbound messages are answered in the originating chat; scheduled runs
+    fall back to the configured broadcast chat.
+    """
+
+    default_chat_id: str = "{{config.configurable.telegram_chat_id}}"
+
+    @staticmethod
+    def listener_chat_id(state: State) -> str | None:
+        """Return the chat ID from the inbound Telegram listener event."""
+        results = state.get("results", {})
+        if not isinstance(results, dict):
+            return None
+        listener = results.get("telegram_listener", {})
+        if not isinstance(listener, dict):
+            return None
+        chat_id = listener.get("chat_id")
+        return str(chat_id) if chat_id else None
+
+    async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:
+        """Return the resolved Telegram chat ID for delivery."""
+        return {"chat_id": self.listener_chat_id(state) or self.default_chat_id}
+
+
 async def orcheo_workflow() -> StateGraph:
-    """Build the Telegram News Carrier workflow."""
+    """Build the Telegram Paperboy workflow."""
     graph = StateGraph(State)
 
-    # --- Trigger ---
+    # --- Trigger detection ---
+    graph.add_node("detect_trigger", DetectTriggerNode(name="detect_trigger"))
     graph.add_node(
         "cron_trigger",
         CronTriggerNode(
             name="cron_trigger",
             expression="{{config.configurable.cron_expression}}",
             timezone="Europe/Amsterdam",
+        ),
+    )
+    graph.add_node(
+        "telegram_listener",
+        TelegramBotListenerNode(
+            name="telegram_listener",
+            token="[[telegram_token]]",
+            allowed_updates=["message"],
+            allowed_chat_types=["private"],
+            poll_timeout_seconds=30,
+            bot_identity_key="telegram:primary",
         ),
     )
 
@@ -116,12 +171,19 @@ async def orcheo_workflow() -> StateGraph:
         FormatDigestNode(name="format_digest"),
     )
 
-    # --- Deliver to the configured chat ---
+    # --- Resolve the target chat ---
+    graph.add_node(
+        "resolve_target",
+        ResolveTargetChatNode(name="resolve_target"),
+    )
+
+    # --- Deliver to the resolved chat ---
     graph.add_node(
         "send_news",
         MessageTelegram(
             name="send_news",
-            chat_id="{{config.configurable.telegram_chat_id}}",
+            token="[[telegram_token]]",
+            chat_id="{{resolve_target.chat_id}}",
             message="{{format_digest.content}}",
             parse_mode="HTML",
         ),
@@ -140,8 +202,44 @@ async def orcheo_workflow() -> StateGraph:
     )
 
     # --- Edges ---
-    graph.set_entry_point("cron_trigger")
+    graph.set_entry_point("detect_trigger")
+
+    # Route inbound messages to the listener, scheduled runs to the cron trigger.
+    trigger_router = IfElseEdge(
+        name="trigger_router",
+        conditions=[
+            Condition(left="{{detect_trigger.is_listener}}", operator="is_truthy"),
+        ],
+    )
+    graph.add_conditional_edges(
+        "detect_trigger",
+        trigger_router,
+        {
+            "true": "telegram_listener",
+            "false": "cron_trigger",
+        },
+    )
+
     graph.add_edge("cron_trigger", "find_unread")
+
+    # Only build a digest for inbound updates that carry a message.
+    inbound_router = IfElseEdge(
+        name="inbound_router",
+        conditions=[
+            Condition(
+                left="{{telegram_listener.should_process}}", operator="is_truthy"
+            ),
+        ],
+    )
+    graph.add_conditional_edges(
+        "telegram_listener",
+        inbound_router,
+        {
+            "true": "find_unread",
+            "false": END,
+        },
+    )
+
     graph.add_edge("find_unread", "format_digest")
 
     # Only send (and mark read) when there are unread items to deliver.
@@ -155,11 +253,12 @@ async def orcheo_workflow() -> StateGraph:
         "format_digest",
         deliver_router,
         {
-            "true": "send_news",
+            "true": "resolve_target",
             "false": END,
         },
     )
 
+    graph.add_edge("resolve_target", "send_news")
     graph.add_edge("send_news", "mark_read")
     graph.add_edge("mark_read", END)
 
