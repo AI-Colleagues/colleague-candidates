@@ -11,7 +11,7 @@
       "type": "string",
       "title": "MongoDB Database",
       "description": "MongoDB database that stores the RSS feed entries.",
-      "default": "AIC"
+      "default": "Orcheo"
     },
     "mongodb_collection": {
       "type": "string",
