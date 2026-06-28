@@ -1,0 +1,10 @@
+{
+  "configurable": {
+    "chat_type": {
+      "type": "string",
+      "title": "Chat Type",
+      "description": "Telegram chat type to look up (e.g. private, group, supergroup, channel).",
+      "default": "private"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "configurable": {
+    "cron_expression": {
+      "type": "string",
+      "title": "Schedule",
+      "description": "Cron schedule for delivering the news digest (Europe/Amsterdam).",
+      "format": "cron",
+      "default": "0 9 * * *"
+    },
+    "rss_database": {
+      "type": "string",
+      "title": "RSS Database",
+      "description": "MongoDB database holding RSS feeds and subscribers.",
+      "default": "Orcheo"
+    },
+    "rss_collection": {
+      "type": "string",
+      "title": "RSS Collection",
+      "description": "MongoDB collection that stores the RSS feed entries.",
+      "default": "rss_feeds"
+    },
+    "telegram_chat_id": {
+      "type": "string",
+      "title": "Telegram Chat ID",
+      "description": "Telegram chat that receives the news digest.",
+      "default": "[[telegram_chat_id]]"
+    }
+  }
+}
