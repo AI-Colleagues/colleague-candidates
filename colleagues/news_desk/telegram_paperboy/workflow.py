@@ -118,7 +118,10 @@ class ResolveTargetChatNode(TaskNode):
         listener = results.get("telegram_listener", {})
         if not isinstance(listener, dict):
             return None
-        chat_id = listener.get("chat_id")
+        reply_target = listener.get("reply_target", {})
+        chat_id = (
+            reply_target.get("chat_id") if isinstance(reply_target, dict) else None
+        ) or listener.get("chat_id")
         return str(chat_id) if chat_id else None
 
     async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:

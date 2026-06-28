@@ -14,7 +14,7 @@
 Chat-triggered helper: send *any* message through ChatKit and the workflow
 calls the Telegram Bot API ``getUpdates`` endpoint and replies with a templated
 message containing the most recent matching chat ID. Use it to discover the
-``telegram_chat_id`` value needed by the Telegram News Carrier colleague:
+``telegram_chat_id`` value needed by the Telegram Paperboy colleague:
 message your bot first, then send any message here to read the chat ID back.
 
 Configurable inputs (config.json):
@@ -107,8 +107,7 @@ class GetTelegramChatIdNode(TaskNode):
 
         lines += [
             "",
-            "Use this value as `telegram_chat_id` in the "
-            "Telegram News Carrier colleague.",
+            "Use this value as `telegram_chat_id` in the Telegram Paperboy colleague.",
         ]
         return "\n".join(lines)
 
