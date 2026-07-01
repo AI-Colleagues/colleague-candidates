@@ -9,7 +9,7 @@ dev = [
 
 [project]
 dependencies = [
-  "orcheo"
+  "orcheo",
 ]
 description = "Candidate AI colleagues for Orcheo."
 name = "colleague-candidates"

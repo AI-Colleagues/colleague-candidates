@@ -32,9 +32,8 @@ Orcheo vault secrets required:
 
 import html
 from typing import Any
-from langchain_core.runnables import RunnableConfig
-from langgraph.graph import END, StateGraph
 from orcheo.edges import Condition, IfElseEdge
+from orcheo.graph import END, RunnableConfig, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
 from orcheo.nodes.connectors.telegram import MessageTelegram, TelegramBotListenerNode

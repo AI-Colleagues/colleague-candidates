@@ -19,7 +19,7 @@ Configurable inputs (config.json):
 - vector_path: Document field containing vector embeddings
 """
 
-from langgraph.graph import END, START, StateGraph
+from orcheo.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.storage.mongodb import (
     MongoDBEnsureSearchIndexNode,

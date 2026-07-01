@@ -11,10 +11,9 @@
 
 """Insight Analyst: route qualitative analysis across codebook, coding, and reports."""
 
-from __future__ import annotations
 from typing import Any, Literal
-from langgraph.graph import END, START, StateGraph
 from orcheo.edges import ResultFieldRouteEdge, ResultFlagEdge
+from orcheo.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode, LLMNode
 from orcheo.nodes.logic import FinalReplyNode, StructuredRouterDispatchNode

@@ -19,7 +19,7 @@ RSS source URLs are maintained in the companion ``config.json``
 and uploaded via ``--config-file config.json``.
 """
 
-from langgraph.graph import END, START, StateGraph
+from orcheo.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.connectors.rss import RSSNode
 from orcheo.nodes.storage.mongodb import MongoDBUpsertManyNode

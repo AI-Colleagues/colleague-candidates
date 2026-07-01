@@ -11,7 +11,7 @@
 
 """Orcheo graph example that runs an agent over native ChatKit widgets."""
 
-from langgraph.graph import END, START, StateGraph
+from orcheo.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode
 
