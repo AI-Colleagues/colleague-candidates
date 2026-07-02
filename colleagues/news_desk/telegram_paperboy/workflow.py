@@ -30,76 +30,78 @@ Orcheo vault secrets required:
 - mdb_connection_string: MongoDB connection string
 """
 
-import html
-from typing import Any
-from orcheo.edges import Condition, IfElseEdge
-from orcheo.graph import END, RunnableConfig, StateGraph
+from orcheo.graph import END, StateGraph
 from orcheo.graph.state import State
-from orcheo.nodes.base import TaskNode
-from orcheo.nodes.connectors.telegram import MessageTelegram, TelegramBotListenerNode
+from orcheo.nodes import CodeNode
+from orcheo.nodes.connectors.telegram import (
+    MessageTelegramNode,
+    TelegramBotListenerNode,
+)
+from orcheo.nodes.data import HtmlTextTransformNode
 from orcheo.nodes.storage.mongodb import MongoDBFindNode, MongoDBUpdateManyNode
 from orcheo.nodes.triggers import CronTriggerNode
 
 
-class DetectTriggerNode(TaskNode):
+class DetectTriggerNode(CodeNode):
     """Detect whether the run was started by an inbound listener event."""
 
-    async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:
+    async def run(self, state, config):
         """Return whether a listener payload is present in inputs."""
         inputs = state.get("inputs", {})
         is_listener = bool(
             isinstance(inputs, dict)
             and (inputs.get("listener") or inputs.get("platform"))
         )
-        return {"is_listener": is_listener}
+        return {"results": {"detect_trigger": {"is_listener": is_listener}}}
 
 
-class FormatDigestNode(TaskNode):
+class FormatDigestNode(CodeNode):
     """Format the latest unread RSS news items into a digest message."""
 
-    @staticmethod
-    def decode_title(text: str | None) -> str:
-        """Decode HTML entities and escape title text for Telegram HTML."""
-        if not text:
-            return "No Title"
-        decoded = html.unescape(text).replace("\xa0", " ")
-        return html.escape(decoded)
-
-    @staticmethod
-    def read_items(state: State) -> list[dict[str, Any]]:
-        """Extract news items from the find_unread node results."""
+    async def run(self, state, config):
+        """Return the digest content string and the delivered item IDs."""
         results = state.get("results", {})
         if not isinstance(results, dict):
-            return []
-        find_result = results.get("find_unread", {})
-        if not isinstance(find_result, dict):
-            return []
-        data = find_result.get("data")
+            results = {}
+        html_result = results.get("escape_titles", {})
+        if not isinstance(html_result, dict):
+            html_result = {}
+        data = html_result.get("result")
         if isinstance(data, list):
-            return data
-        return []
-
-    async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:
-        """Return the digest content string and the delivered item IDs."""
-        items = self.read_items(state)
+            items = data
+        else:
+            items = []
 
         lines = []
+        ids = []
         for item in items:
-            title = self.decode_title(item.get("title"))
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("_id")
+            if item_id is not None:
+                ids.append(item_id)
+            title = item.get("title")
+            if not title:
+                title = "No Title"
             url = item.get("link", "")
             if url:
-                lines.append(f'- <a href="{url}">{title}</a>')
+                lines.append('- <a href="' + str(url) + '">' + str(title) + "</a>")
             else:
-                lines.append(f"- {title}")
+                lines.append("- " + str(title))
 
         content = "\n".join(lines) if lines else "No news updates today."
         return {
-            "content": f"Today's RSS News:\n\n{content}",
-            "ids": [item.get("_id") for item in items if item.get("_id") is not None],
+            "results": {
+                "format_digest": {
+                    "content": "Today's RSS News:\n\n" + content,
+                    "ids": ids,
+                    "has_items": bool(ids),
+                }
+            }
         }
 
 
-class ResolveTargetChatNode(TaskNode):
+class ResolveTargetChatNode(CodeNode):
     """Pick the chat that receives the digest.
 
     Inbound messages are answered in the originating chat; scheduled runs
@@ -108,24 +110,23 @@ class ResolveTargetChatNode(TaskNode):
 
     default_chat_id: str = "{{config.configurable.telegram_chat_id}}"
 
-    @staticmethod
-    def listener_chat_id(state: State) -> str | None:
+    async def run(self, state, config):
         """Return the chat ID from the inbound Telegram listener event."""
         results = state.get("results", {})
         if not isinstance(results, dict):
-            return None
+            results = {}
         listener = results.get("telegram_listener", {})
         if not isinstance(listener, dict):
-            return None
+            listener = {}
         reply_target = listener.get("reply_target", {})
         chat_id = (
             reply_target.get("chat_id") if isinstance(reply_target, dict) else None
         ) or listener.get("chat_id")
-        return str(chat_id) if chat_id else None
-
-    async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:
-        """Return the resolved Telegram chat ID for delivery."""
-        return {"chat_id": self.listener_chat_id(state) or self.default_chat_id}
+        if chat_id:
+            target = str(chat_id)
+        else:
+            target = self.default_chat_id
+        return {"results": {"resolve_target": {"chat_id": target}}}
 
 
 async def orcheo_workflow() -> StateGraph:
@@ -167,6 +168,16 @@ async def orcheo_workflow() -> StateGraph:
         ),
     )
 
+    graph.add_node(
+        "escape_titles",
+        HtmlTextTransformNode(
+            name="escape_titles",
+            input_data="{{find_unread.data}}",
+            operations=["unescape", "normalize_nbsp", "escape"],
+            fields=["title"],
+        ),
+    )
+
     # --- Format digest ---
     graph.add_node(
         "format_digest",
@@ -182,7 +193,7 @@ async def orcheo_workflow() -> StateGraph:
     # --- Deliver to the resolved chat ---
     graph.add_node(
         "send_news",
-        MessageTelegram(
+        MessageTelegramNode(
             name="send_news",
             token="[[telegram_token]]",
             chat_id="{{resolve_target.chat_id}}",
@@ -207,56 +218,43 @@ async def orcheo_workflow() -> StateGraph:
     graph.set_entry_point("detect_trigger")
 
     # Route inbound messages to the listener, scheduled runs to the cron trigger.
-    trigger_router = IfElseEdge(
-        name="trigger_router",
-        conditions=[
-            Condition(left="{{detect_trigger.is_listener}}", operator="is_truthy"),
-        ],
-    )
     graph.add_conditional_edges(
         "detect_trigger",
-        trigger_router,
         {
-            "true": "telegram_listener",
-            "false": "cron_trigger",
+            "path": "results.detect_trigger.is_listener",
+            "mapping": {
+                "true": "telegram_listener",
+                "false": "cron_trigger",
+            },
         },
     )
 
     graph.add_edge("cron_trigger", "find_unread")
 
     # Only build a digest for inbound updates that carry a message.
-    inbound_router = IfElseEdge(
-        name="inbound_router",
-        conditions=[
-            Condition(
-                left="{{telegram_listener.should_process}}", operator="is_truthy"
-            ),
-        ],
-    )
     graph.add_conditional_edges(
         "telegram_listener",
-        inbound_router,
         {
-            "true": "find_unread",
-            "false": END,
+            "path": "results.telegram_listener.should_process",
+            "mapping": {
+                "true": "find_unread",
+                "false": END,
+            },
         },
     )
 
-    graph.add_edge("find_unread", "format_digest")
+    graph.add_edge("find_unread", "escape_titles")
+    graph.add_edge("escape_titles", "format_digest")
 
     # Only send (and mark read) when there are unread items to deliver.
-    deliver_router = IfElseEdge(
-        name="deliver_router",
-        conditions=[
-            Condition(left="{{format_digest.ids}}", operator="is_truthy"),
-        ],
-    )
     graph.add_conditional_edges(
         "format_digest",
-        deliver_router,
         {
-            "true": "resolve_target",
-            "false": END,
+            "path": "results.format_digest.has_items",
+            "mapping": {
+                "true": "resolve_target",
+                "false": END,
+            },
         },
     )
 
