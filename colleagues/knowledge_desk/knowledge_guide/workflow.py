@@ -19,7 +19,7 @@ from orcheo.nodes.rag import (
     TextEmbeddingNode,
 )
 from orcheo.nodes.storage.mongodb import MongoDBHybridSearchNode
-from pydantic import BaseModel, Field
+from orcheo.schema import BaseModel, Field
 
 
 class HybridSearchInput(BaseModel):

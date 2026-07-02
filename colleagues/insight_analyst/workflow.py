@@ -43,7 +43,7 @@ from orcheo.nodes.qualitative import (
     SetupNode,
 )
 from orcheo.nodes.qualitative.pipeline import ContextPreNode
-from pydantic import BaseModel, Field
+from orcheo.schema import BaseModel, Field
 
 
 RouteBranch = Literal[
