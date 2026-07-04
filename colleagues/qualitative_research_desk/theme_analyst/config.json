@@ -10,6 +10,18 @@
       "description": "The AI model to use for the agent.",
       "default": "openai:gpt-5.4-mini"
     },
+    "batch_size": {
+      "type": "integer",
+      "title": "Batch Size",
+      "description": "Number of qualitative units to process per batch.",
+      "default": 25
+    },
+    "per_turn_batch_budget": {
+      "type": "integer",
+      "title": "Per-Turn Batch Budget",
+      "description": "Maximum number of recoding batches to run in a single turn.",
+      "default": 1000
+    },
     "quotes_per_theme": {
       "type": "integer",
       "title": "Quotes Per Theme",
@@ -23,5 +35,6 @@
       "description": "Comma-separated variables used to segment the respondent data.",
       "default": ""
     }
-  }
+  },
+  "recursion_limit": 250
 }

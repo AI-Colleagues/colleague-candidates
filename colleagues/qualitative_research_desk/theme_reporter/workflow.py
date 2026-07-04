@@ -2,16 +2,11 @@
 # name = "Theme Reporter"
 # handle = "theme-reporter"
 # description = "Synthesise theme insights and render a research report."
-# version = "1.0.0"
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-14"
 # subtitle = "Theme synthesis and reporting"
-#
-# [[updates]]
-# version = "1.0.0"
-# summary = "Renames Insight Reporter to Theme Reporter."
-# migration = "Re-onboard under new handle; old handle was `insight-reporter`."
 # ///
 
 """Theme Reporter: turn coded data into an evidence-grounded report."""

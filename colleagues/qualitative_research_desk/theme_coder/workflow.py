@@ -2,16 +2,11 @@
 # name = "Theme Coder"
 # handle = "theme-coder"
 # description = "Recode qualitative data against a codebook and quantify themes."
-# version = "1.0.0"
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-18"
 # subtitle = "Data recoding"
-#
-# [[updates]]
-# version = "1.0.0"
-# summary = "Renames Theme Coding Analyst to Theme Coder."
-# migration = "Re-onboard under new handle; old handle was `theme-coding-analyst`."
 # ///
 
 """Theme Coder: recode data against an approved codebook."""
