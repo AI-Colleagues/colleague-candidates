@@ -1,0 +1,7 @@
+respondent_id,segment,role,text
+R1,new,admin,"The setup checklist was clear, but I could not find billing settings after signup."
+R2,new,manager,"I liked the dashboard because it showed progress quickly, yet inviting teammates was confusing."
+R3,returning,admin,"Support replied fast, but the answer did not solve my account access problem."
+R4,returning,manager,"The product feels fast and the reports are useful, although the navigation takes a while to learn."
+R5,small_team,owner,"I want one place to manage billing, teammates, and permissions without hunting through menus."
+R6,small_team,owner,"The onboarding emails were helpful, but they repeated steps I had already finished in the app."

@@ -1,0 +1,22 @@
+[
+  {
+    "speaker": "Interviewer",
+    "text": "What was hardest during setup?"
+  },
+  {
+    "speaker": "Participant",
+    "text": "I had trouble finding billing and permissions after creating the account."
+  },
+  {
+    "speaker": "Interviewer",
+    "text": "What helped you make progress?"
+  },
+  {
+    "speaker": "Participant",
+    "text": "The checklist was useful, and the dashboard made it easier to see progress."
+  },
+  {
+    "speaker": "Participant",
+    "text": "Inviting teammates took too many clicks."
+  }
+]
