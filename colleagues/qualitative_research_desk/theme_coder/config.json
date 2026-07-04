@@ -19,7 +19,7 @@
     "per_turn_batch_budget": {
       "type": "integer",
       "title": "Per-Turn Batch Budget",
-      "description": "Maximum number of units to code in a single turn.",
+      "description": "Maximum number of recoding batches to run in a single turn.",
       "default": 1000
     }
   },

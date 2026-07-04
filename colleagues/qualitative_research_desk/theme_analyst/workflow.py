@@ -70,127 +70,76 @@ class RoutingDecision(BaseModel):
 class ResolveMergedInputsNode(CodeNode):
     """Resolve uploaded or previously produced artefacts for merged branches."""
 
-    async def run(self, state, config):  # noqa: C901, PLR0912, PLR0915
+    async def run(self, state, config):
         """Emit merged branch inputs and readiness flags."""
         del config
+
+        def has_content(value):
+            return (
+                value is not None
+                and (not isinstance(value, str) or bool(value.strip()))
+                and (not isinstance(value, list) or bool(value))
+                and (not isinstance(value, dict) or bool(value))
+            )
 
         results = state.get("results")
         if not isinstance(results, dict):
             results = {}
 
-        validate_recode = results.get("validate_recode_files")
-        if not isinstance(validate_recode, dict):
-            validate_recode = {}
-        validate_codebook = results.get("validate_codebook_files")
-        if not isinstance(validate_codebook, dict):
-            validate_codebook = {}
-        validate_report = results.get("validate_report_files")
-        if not isinstance(validate_report, dict):
-            validate_report = {}
-        consolidator = results.get("codebook_consolidator_finalize")
-        if not isinstance(consolidator, dict):
-            consolidator = {}
-        data_quality = results.get("data_quality")
-        if not isinstance(data_quality, dict):
-            data_quality = {}
-        ingest = results.get("ingest")
-        if not isinstance(ingest, dict):
-            ingest = {}
-        recoder_finalize = results.get("recoder_finalize")
-        if not isinstance(recoder_finalize, dict):
-            recoder_finalize = {}
+        def section(name: str) -> dict:
+            value = results.get(name)
+            return value if isinstance(value, dict) else {}
+
+        validate_codebook = section("validate_codebook_files")
+        validate_recode = section("validate_recode_files")
+        validate_report = section("validate_report_files")
+        consolidator = section("codebook_consolidator_finalize")
+        data_quality = section("data_quality")
+        recoder_finalize = section("recoder_finalize")
 
         draft_codebook = consolidator.get("draft_codebook")
+        codebook_gen_source = validate_codebook.get("source_payload")
+
         recode_source_payload = validate_recode.get("source_payload")
         if recode_source_payload is None:
-            recode_source_payload = validate_codebook.get("source_payload")
+            recode_source_payload = codebook_gen_source
         recode_codebook = validate_recode.get("approved_codebook")
         if recode_codebook is None:
             recode_codebook = draft_codebook
 
-        report_source_payload = validate_report.get("source_payload")
-        if report_source_payload is None:
-            report_source_payload = validate_recode.get("source_payload")
-        if report_source_payload is None:
-            report_source_payload = validate_codebook.get("source_payload")
         report_codebook = validate_report.get("approved_codebook")
         if report_codebook is None:
             report_codebook = validate_recode.get("approved_codebook")
         if report_codebook is None:
             report_codebook = draft_codebook
         report_units = data_quality.get("units")
-        if report_units is None:
-            report_units = ingest.get("units")
         report_assignments = recoder_finalize.get("assignments")
-
-        has_draft_codebook = False
-        if draft_codebook is not None:
-            if isinstance(draft_codebook, str):
-                has_draft_codebook = bool(draft_codebook.strip())
-            elif isinstance(draft_codebook, list) or isinstance(draft_codebook, dict):
-                has_draft_codebook = bool(draft_codebook)
-            else:
-                has_draft_codebook = True
-
-        has_recode_source = False
-        if recode_source_payload is not None:
-            if isinstance(recode_source_payload, str):
-                has_recode_source = bool(recode_source_payload.strip())
-            elif isinstance(recode_source_payload, list) or isinstance(
-                recode_source_payload, dict
-            ):
-                has_recode_source = bool(recode_source_payload)
-            else:
-                has_recode_source = True
-
-        has_recode_codebook = False
-        if recode_codebook is not None:
-            if isinstance(recode_codebook, str):
-                has_recode_codebook = bool(recode_codebook.strip())
-            elif isinstance(recode_codebook, list) or isinstance(recode_codebook, dict):
-                has_recode_codebook = bool(recode_codebook)
-            else:
-                has_recode_codebook = True
-
-        has_report_codebook = False
-        if report_codebook is not None:
-            if isinstance(report_codebook, str):
-                has_report_codebook = bool(report_codebook.strip())
-            elif isinstance(report_codebook, list) or isinstance(report_codebook, dict):
-                has_report_codebook = bool(report_codebook)
-            else:
-                has_report_codebook = True
-
-        has_report_units = False
-        if report_units is not None:
-            if isinstance(report_units, str):
-                has_report_units = bool(report_units.strip())
-            elif isinstance(report_units, list) or isinstance(report_units, dict):
-                has_report_units = bool(report_units)
-            else:
-                has_report_units = True
-
-        has_report_assignments = False
-        if report_assignments is not None:
-            if isinstance(report_assignments, str):
-                has_report_assignments = bool(report_assignments.strip())
-            elif isinstance(report_assignments, list) or isinstance(
-                report_assignments, dict
-            ):
-                has_report_assignments = bool(report_assignments)
-            else:
-                has_report_assignments = True
 
         report_uploaded_ready = bool(validate_report.get("ok"))
         report_chained_ready = (
-            has_report_codebook and has_report_units and has_report_assignments
+            has_content(report_codebook)
+            and has_content(report_units)
+            and has_content(report_assignments)
         )
+
+        # Recode results produced in this thread are fresher than an uploaded
+        # coded-data CSV, which may be a stale export re-attached by the chat
+        # runtime. Only fall back to an uploaded payload when nothing was
+        # recoded here.
+        report_source_payload = None
+        if not report_chained_ready:
+            report_source_payload = validate_report.get("source_payload")
+            if report_source_payload is None:
+                report_source_payload = recode_source_payload
 
         return {
             "draft_codebook": draft_codebook,
+            "codebook_gen_ready": has_content(codebook_gen_source),
             "recode_source_payload": recode_source_payload,
             "recode_codebook": recode_codebook,
-            "recode_ready": has_recode_source and has_recode_codebook,
+            "recode_ready": (
+                has_content(recode_source_payload) and has_content(recode_codebook)
+            ),
             "report_source_payload": report_source_payload,
             "report_codebook": report_codebook,
             "report_units": report_units,
@@ -198,8 +147,10 @@ class ResolveMergedInputsNode(CodeNode):
             "report_ready": report_uploaded_ready or report_chained_ready,
             "report_uploaded_ready": report_uploaded_ready,
             "report_chained_ready": report_chained_ready,
-            "has_draft_codebook": has_draft_codebook,
-            "has_recoded_data": has_report_units and has_report_assignments,
+            "has_draft_codebook": has_content(draft_codebook),
+            "has_recoded_data": (
+                has_content(report_units) and has_content(report_assignments)
+            ),
         }
 
 
@@ -208,9 +159,10 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
     generate_codebook = StateGraph(State)
 
     generate_codebook.add_node(
-        "ingest",
+        "codebook_ingest",
         IngestNode(
-            name="ingest",
+            name="codebook_ingest",
+            source_payload="{{results.validate_codebook_files.source_payload}}",
             pending_documents="{{results.load_attachments.attachments}}",
         ),
     )
@@ -220,7 +172,7 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="open_coder_prepare",
             stage="open_coder",
             research_objective="{{structured_response.research_objective}}",
-            units="{{results.ingest.units}}",
+            units="{{results.codebook_ingest.units}}",
             code_assignments=("{{results.open_coder_finalize.code_assignments_pass1}}"),
             open_coding_system_prompt_template=(
                 "You are an inductive qualitative coder. "
@@ -251,7 +203,7 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         LLMStageFinalizeNode(
             name="open_coder_finalize",
             stage="open_coder",
-            units="{{results.ingest.units}}",
+            units="{{results.codebook_ingest.units}}",
             code_assignments=("{{results.open_coder_finalize.code_assignments_pass1}}"),
         ),
     )
@@ -261,7 +213,7 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="codebook_consolidator_prepare",
             stage="codebook_consolidator",
             research_objective="{{results.open_coder_prepare.objective}}",
-            units="{{results.ingest.units}}",
+            units="{{results.codebook_ingest.units}}",
             code_assignments=("{{results.open_coder_finalize.code_assignments_pass1}}"),
             seed_codebook="{{results.load_attachments.attachments}}",
             codebook_consolidator_system_prompt_template=(
@@ -301,8 +253,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="codebook_output",
             codebook="{{results.codebook_consolidator_finalize.draft_codebook}}",
             research_objective="{{results.open_coder_prepare.objective}}",
-            units="{{results.ingest.units}}",
+            units="{{results.codebook_ingest.units}}",
             title="Theme Analyst",
+            ingest_node_name="codebook_ingest",
             review_message=(
                 "Please review the codebook above. You can request revisions by "
                 "describing what to change, approve it for export, or ask me to "
@@ -311,11 +264,11 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         ),
     )
 
-    generate_codebook.add_edge(START, "ingest")
+    generate_codebook.add_edge(START, "codebook_ingest")
     generate_codebook.add_conditional_edges(
-        "ingest",
+        "codebook_ingest",
         {
-            "path": "results.ingest.halt",
+            "path": "results.codebook_ingest.halt",
             "mapping": {"true": "codebook_output", "false": "open_coder_prepare"},
         },
     )
@@ -360,9 +313,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
     recode_data = StateGraph(State)
 
     recode_data.add_node(
-        "ingest",
+        "recode_ingest",
         IngestNode(
-            name="ingest",
+            name="recode_ingest",
             source_payload="{{results.resolve_inputs.recode_source_payload}}",
             pending_documents="{{results.load_attachments.attachments}}",
             approved_codebook="{{results.resolve_inputs.recode_codebook}}",
@@ -380,7 +333,7 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
     )
     recode_data.add_node(
         "data_quality",
-        DataQualityNode(name="data_quality", units="{{results.ingest.units}}"),
+        DataQualityNode(name="data_quality", units="{{results.recode_ingest.units}}"),
     )
     recode_data.add_node(
         "recoder_prepare",
@@ -431,14 +384,15 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             assignments="{{results.recoder_finalize.assignments}}",
             quality_report="{{results.data_quality.quality_report}}",
             title="Theme Analyst",
+            ingest_node_name="recode_ingest",
         ),
     )
 
-    recode_data.add_edge(START, "ingest")
+    recode_data.add_edge(START, "recode_ingest")
     recode_data.add_conditional_edges(
-        "ingest",
+        "recode_ingest",
         {
-            "path": "results.ingest.halt",
+            "path": "results.recode_ingest.halt",
             "mapping": {"true": "recode_output", "false": "data_quality"},
         },
     )
@@ -469,9 +423,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
     generate_report = StateGraph(State)
 
     generate_report.add_node(
-        "ingest",
+        "report_ingest",
         CodedDataIngestNode(
-            name="ingest",
+            name="report_ingest",
             source_payload="{{results.resolve_inputs.report_source_payload}}",
             units="{{results.resolve_inputs.report_units}}",
             code_assignments="{{results.resolve_inputs.report_assignments}}",
@@ -492,10 +446,10 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="quote_selector_prepare",
             stage="quote_selector",
             research_objective="{{structured_response.research_objective}}",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            quantification="{{results.ingest.quantification}}",
+            units="{{results.report_ingest.units}}",
+            code_assignments="{{results.report_ingest.code_assignments}}",
+            approved_codebook="{{results.report_ingest.approved_codebook}}",
+            quantification="{{results.report_ingest.quantification}}",
             quote_selector_system_prompt_template=(
                 "You are selecting representative verbatim quotes for a research "
                 "report. Research objective:\n{objective}\n\n"
@@ -520,9 +474,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         LLMStageFinalizeNode(
             name="quote_selector_finalize",
             stage="quote_selector",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
+            units="{{results.report_ingest.units}}",
+            code_assignments="{{results.report_ingest.code_assignments}}",
+            approved_codebook="{{results.report_ingest.approved_codebook}}",
             selected_quotes_field="selected_quotes",
             response_schema=QuoteSelectionResponse,
         ),
@@ -533,10 +487,10 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="insight_generator_prepare",
             stage="insight_generator",
             research_objective="{{structured_response.research_objective}}",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            quantification="{{results.ingest.quantification}}",
+            units="{{results.report_ingest.units}}",
+            code_assignments="{{results.report_ingest.code_assignments}}",
+            approved_codebook="{{results.report_ingest.approved_codebook}}",
+            quantification="{{results.report_ingest.quantification}}",
             selected_quotes="{{results.quote_selector_finalize.selected_quotes}}",
             insight_generator_system_prompt_template=(
                 "You are synthesising evidence-grounded research insights. "
@@ -563,10 +517,10 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         LLMStageFinalizeNode(
             name="insight_generator_finalize",
             stage="insight_generator",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            quantification="{{results.ingest.quantification}}",
+            units="{{results.report_ingest.units}}",
+            code_assignments="{{results.report_ingest.code_assignments}}",
+            approved_codebook="{{results.report_ingest.approved_codebook}}",
+            quantification="{{results.report_ingest.quantification}}",
             candidate_insights_field="candidate_insights",
             response_schema=InsightGenerationResponse,
         ),
@@ -575,10 +529,10 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         "insight_critic",
         InsightCriticNode(
             name="insight_critic",
-            units="{{results.ingest.units}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            segment_comparisons="{{results.ingest.segment_comparisons}}",
+            units="{{results.report_ingest.units}}",
+            approved_codebook="{{results.report_ingest.approved_codebook}}",
+            code_assignments="{{results.report_ingest.code_assignments}}",
+            segment_comparisons="{{results.report_ingest.segment_comparisons}}",
             candidate_insights=(
                 "{{results.insight_generator_finalize.candidate_insights}}"
             ),
@@ -601,28 +555,28 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="report_output",
             research_objective="{{structured_response.research_objective}}",
             source_payload="{{results.resolve_inputs.report_source_payload}}",
-            units="{{results.ingest.units}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            quantification="{{results.ingest.quantification}}",
-            cooccurrence="{{results.ingest.cooccurrence}}",
-            segment_breakdowns="{{results.ingest.segment_breakdowns}}",
-            segment_comparisons="{{results.ingest.segment_comparisons}}",
+            units="{{results.report_ingest.units}}",
+            approved_codebook="{{results.report_ingest.approved_codebook}}",
+            code_assignments="{{results.report_ingest.code_assignments}}",
+            quantification="{{results.report_ingest.quantification}}",
+            cooccurrence="{{results.report_ingest.cooccurrence}}",
+            segment_breakdowns="{{results.report_ingest.segment_breakdowns}}",
+            segment_comparisons="{{results.report_ingest.segment_comparisons}}",
             selected_quotes="{{results.quote_selector_finalize.selected_quotes}}",
             candidate_insights="{{results.recommendation_generator.candidate_insights}}",
             recommendations="{{results.recommendation_generator.recommendations}}",
             approved_insight_ids=(
                 "{{results.recommendation_generator.approved_insight_ids}}"
             ),
-            ingest_node_name="ingest",
+            ingest_node_name="report_ingest",
         ),
     )
 
-    generate_report.add_edge(START, "ingest")
+    generate_report.add_edge(START, "report_ingest")
     generate_report.add_conditional_edges(
-        "ingest",
+        "report_ingest",
         {
-            "path": "results.ingest.halt",
+            "path": "results.report_ingest.halt",
             "mapping": {"true": "report_output", "false": "quote_selector_prepare"},
         },
     )
@@ -715,16 +669,18 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
                 "Report validation errors: "
                 "{{results.validate_report_files.errors}}\n\n"
                 "Merged branch readiness:\n"
+                "- Codebook generation ready from uploaded raw data: "
+                "{{results.resolve_inputs.codebook_gen_ready}}\n"
                 "- Draft codebook available: "
                 "{{results.resolve_inputs.has_draft_codebook}}\n"
                 "- Recoding ready from uploaded or generated inputs: "
                 "{{results.resolve_inputs.recode_ready}}\n"
                 "- Report ready from uploaded coded data or recoded results: "
                 "{{results.resolve_inputs.report_ready}}\n"
-                "- Report uses uploaded coded data: "
+                "- Report can use uploaded coded data: "
                 "{{results.resolve_inputs.report_uploaded_ready}}\n"
-                "- Report uses recoded results from this workflow: "
-                "{{results.resolve_inputs.report_chained_ready}}\n\n"
+                "- Report uses recoded results from this workflow when "
+                "available: {{results.resolve_inputs.report_chained_ready}}\n\n"
                 "Previous research objective, if any:\n"
                 "{{results.open_coder_prepare.objective}}\n"
                 "{{results.report_output.research_objective}}\n\n"
@@ -759,7 +715,8 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
                 "`generate_report`, set `branch` to `respond` and ask for it.\n"
                 "- If the user asks to generate, redo, rerun, or revise the "
                 "codebook, route to `generate_codebook` when a research objective "
-                "is available and codebook generation validation is ok.\n"
+                "is available and either codebook generation validation is ok or "
+                "the codebook generation readiness flag is true.\n"
                 "- If the user asks to code, recode, rerun, or revise coded data, "
                 "route to `recode_data` when merged recoding readiness is true.\n"
                 "- If the user asks to generate, redo, rerun, or revise the "
@@ -816,13 +773,13 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="export_report",
             research_objective="{{results.report_output.research_objective}}",
             source_payload="{{results.resolve_inputs.report_source_payload}}",
-            units="{{results.ingest.units}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            quantification="{{results.ingest.quantification}}",
-            cooccurrence="{{results.ingest.cooccurrence}}",
-            segment_breakdowns="{{results.ingest.segment_breakdowns}}",
-            segment_comparisons="{{results.ingest.segment_comparisons}}",
+            units="{{results.report_ingest.units}}",
+            approved_codebook="{{results.report_ingest.approved_codebook}}",
+            code_assignments="{{results.report_ingest.code_assignments}}",
+            quantification="{{results.report_ingest.quantification}}",
+            cooccurrence="{{results.report_ingest.cooccurrence}}",
+            segment_breakdowns="{{results.report_ingest.segment_breakdowns}}",
+            segment_comparisons="{{results.report_ingest.segment_comparisons}}",
             selected_quotes="{{results.quote_selector_finalize.selected_quotes}}",
             candidate_insights="{{results.recommendation_generator.candidate_insights}}",
             recommendations="{{results.recommendation_generator.recommendations}}",
