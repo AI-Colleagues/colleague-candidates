@@ -20,7 +20,7 @@ from orcheo.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode, LLMNode
 from orcheo.nodes.logic import HumanInputNode
-from orcheo.nodes.logic.routing import ExtractAIMessageNode, ResultAssistantMessageNode
+from orcheo.nodes.logic.routing import ExtractAIMessageNode
 from orcheo.nodes.qualitative import (
     CodedDataIngestNode,
     ExportReportNode,
@@ -351,16 +351,6 @@ async def orcheo_workflow() -> StateGraph:
     )
     graph.add_node("generate_report", generate_report.compile())
     graph.add_node(
-        "prepare_report_review",
-        ResultAssistantMessageNode(
-            name="prepare_report_review",
-            source_paths=[
-                "assistant_message",
-                "results.report_output.assistant_message",
-            ],
-        ),
-    )
-    graph.add_node(
         "review_report",
         HumanInputNode(
             name="review_report",
@@ -401,8 +391,7 @@ async def orcheo_workflow() -> StateGraph:
             "default": "extract_ai_message",
         },
     )
-    graph.add_edge("generate_report", "prepare_report_review")
-    graph.add_edge("prepare_report_review", "review_report")
+    graph.add_edge("generate_report", "review_report")
     graph.add_edge("review_report", "router_agent")
     graph.add_edge("export_report", END)
     graph.add_edge("extract_ai_message", END)
