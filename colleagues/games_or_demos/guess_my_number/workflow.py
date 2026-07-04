@@ -21,7 +21,7 @@ from orcheo.schema import Any, BaseModel, Field, Literal
 class AgentDecision(BaseModel):
     """Structured agent decision for routing and human-facing text."""
 
-    branch: Literal["human", "finish"] = Field(
+    branch: Literal["human", "finish"] = Field(  # noqa: F821
         description="Next branch selected by the agent."
     )
     assistant_message: str = Field(description="Message to show to the human.")
