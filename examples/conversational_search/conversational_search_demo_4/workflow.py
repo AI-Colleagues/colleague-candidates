@@ -13,6 +13,7 @@
 from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, StateGraph
+from pydantic import Field
 from orcheo.edges import SwitchCase, SwitchEdge
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
@@ -34,7 +35,6 @@ from orcheo.nodes.conversational_search.query_processing import (
 )
 from orcheo.nodes.conversational_search.retrieval import DenseSearchNode
 from orcheo.nodes.conversational_search.vector_store import PineconeVectorStore
-from pydantic import Field
 
 
 SKIP_USER_MESSAGE_KEY = "__demo4_skip_user_message"

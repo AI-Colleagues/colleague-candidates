@@ -32,12 +32,12 @@
 # ///
 
 from langgraph.graph import END, START, StateGraph
+from orcheo_plugin_lark_listener import LarkListenerPluginNode
+from orcheo_plugin_wecom_listener import WeComListenerPluginNode, WeComWsReplyNode
 from orcheo.edges import SwitchCase, SwitchEdge
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode, AgentReplyExtractorNode
 from orcheo.nodes.connectors.lark import LarkSendMessageNode, LarkTenantAccessTokenNode
-from orcheo_plugin_lark_listener import LarkListenerPluginNode
-from orcheo_plugin_wecom_listener import WeComListenerPluginNode, WeComWsReplyNode
 
 
 async def orcheo_workflow() -> StateGraph:

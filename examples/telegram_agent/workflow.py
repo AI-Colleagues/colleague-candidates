@@ -10,10 +10,10 @@
 # ///
 
 from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel, Field
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode
 from orcheo.nodes.connectors.telegram import MessageTelegramNode
-from pydantic import BaseModel, Field
 
 
 class TelegramMessageInput(BaseModel):

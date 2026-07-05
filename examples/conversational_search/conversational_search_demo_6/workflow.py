@@ -13,6 +13,7 @@
 from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, StateGraph
+from pydantic import Field
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
 from orcheo.nodes.conversational_search.generation import GroundedGeneratorNode
@@ -39,7 +40,6 @@ from orcheo.nodes.evaluation import (
     TurnAnnotationNode,
     UserFeedbackCollectionNode,
 )
-from pydantic import Field
 
 
 SESSION_ID = "demo-6-evaluation-session"

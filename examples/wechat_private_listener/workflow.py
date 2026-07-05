@@ -29,9 +29,9 @@
 # ///
 
 from langgraph.graph import END, START, StateGraph
+from orcheo_plugin_wechat_listener import WechatListenerPluginNode, WechatReplyNode
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode, AgentReplyExtractorNode
-from orcheo_plugin_wechat_listener import WechatListenerPluginNode, WechatReplyNode
 
 
 async def orcheo_workflow() -> StateGraph:
