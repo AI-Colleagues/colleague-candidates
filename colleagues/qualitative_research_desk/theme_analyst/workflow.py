@@ -173,7 +173,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             stage="open_coder",
             research_objective="{{structured_response.research_objective}}",
             units="{{node_results.codebook_ingest.units}}",
-            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
+            code_assignments=(
+                "{{node_results.open_coder_finalize.code_assignments_pass1}}"
+            ),
             open_coding_system_prompt_template=(
                 "You are an inductive qualitative coder. "
                 "Research objective:\n{objective}\n\n"
@@ -204,7 +206,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             name="open_coder_finalize",
             stage="open_coder",
             units="{{node_results.codebook_ingest.units}}",
-            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
+            code_assignments=(
+                "{{node_results.open_coder_finalize.code_assignments_pass1}}"
+            ),
         ),
     )
     generate_codebook.add_node(
@@ -214,7 +218,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             stage="codebook_consolidator",
             research_objective="{{node_results.open_coder_prepare.objective}}",
             units="{{node_results.codebook_ingest.units}}",
-            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
+            code_assignments=(
+                "{{node_results.open_coder_finalize.code_assignments_pass1}}"
+            ),
             seed_codebook="{{node_results.load_attachments.attachments}}",
             codebook_consolidator_system_prompt_template=(
                 "You are a senior qualitative researcher consolidating open codes. "
@@ -243,7 +249,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         LLMStageFinalizeNode(
             name="codebook_consolidator_finalize",
             stage="codebook_consolidator",
-            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
+            code_assignments=(
+                "{{node_results.open_coder_finalize.code_assignments_pass1}}"
+            ),
             seed_codebook="{{node_results.load_attachments.attachments}}",
         ),
     )
@@ -333,7 +341,9 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
     )
     recode_data.add_node(
         "data_quality",
-        DataQualityNode(name="data_quality", units="{{node_results.recode_ingest.units}}"),
+        DataQualityNode(
+            name="data_quality", units="{{node_results.recode_ingest.units}}"
+        ),
     )
     recode_data.add_node(
         "recoder_prepare",
