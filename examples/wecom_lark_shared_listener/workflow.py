@@ -82,8 +82,8 @@ async def orcheo_workflow() -> StateGraph:
         "ws_reply_wecom",
         WeComWsReplyNode(
             name="ws_reply_wecom",
-            message="{{results.extract_reply.agent_reply}}",
-            raw_event="{{results.wecom_listener.raw_event}}",
+            message="{{node_results.extract_reply.agent_reply}}",
+            raw_event="{{node_results.wecom_listener.raw_event}}",
             subscription_id="{{inputs.listener.listener_subscription_id}}",
         ),
     )
@@ -101,10 +101,10 @@ async def orcheo_workflow() -> StateGraph:
             name="send_lark",
             app_id="[[lark_app_id]]",
             app_secret="[[lark_app_secret]]",
-            receive_id="{{results.lark_listener.reply_target.chat_id}}",
-            reply_to_message_id="{{results.lark_listener.reply_target.message_id}}",
-            thread_id="{{results.lark_listener.reply_target.thread_id}}",
-            message="{{results.extract_reply.agent_reply}}",
+            receive_id="{{node_results.lark_listener.reply_target.chat_id}}",
+            reply_to_message_id="{{node_results.lark_listener.reply_target.message_id}}",
+            thread_id="{{node_results.lark_listener.reply_target.thread_id}}",
+            message="{{node_results.extract_reply.agent_reply}}",
         ),
     )
 

@@ -197,7 +197,7 @@ async def orcheo_workflow() -> StateGraph:
             predefined_tools=["mongodb_find", "mongodb_update_one"],
             use_graph_chat_history=True,
             history_key_candidates=[
-                "wecom_cs:{{results.wecom_cs_sync.open_kf_id}}:{{results.wecom_cs_sync.external_userid}}",
+                "wecom_cs:{{node_results.wecom_cs_sync.open_kf_id}}:{{node_results.wecom_cs_sync.external_userid}}",
             ],
         ),
     )

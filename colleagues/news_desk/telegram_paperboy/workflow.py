@@ -221,7 +221,7 @@ async def orcheo_workflow() -> StateGraph:
     graph.add_conditional_edges(
         "detect_trigger",
         {
-            "path": "results.detect_trigger.is_listener",
+            "path": "node_results.detect_trigger.is_listener",
             "mapping": {
                 "true": "telegram_listener",
                 "false": "cron_trigger",
@@ -235,7 +235,7 @@ async def orcheo_workflow() -> StateGraph:
     graph.add_conditional_edges(
         "telegram_listener",
         {
-            "path": "results.telegram_listener.should_process",
+            "path": "node_results.telegram_listener.should_process",
             "mapping": {
                 "true": "find_unread",
                 "false": END,
@@ -250,7 +250,7 @@ async def orcheo_workflow() -> StateGraph:
     graph.add_conditional_edges(
         "format_digest",
         {
-            "path": "results.format_digest.has_items",
+            "path": "node_results.format_digest.has_items",
             "mapping": {
                 "true": "resolve_target",
                 "false": END,

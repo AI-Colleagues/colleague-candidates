@@ -55,7 +55,7 @@ async def orcheo_workflow() -> StateGraph:
         "ingest",
         IngestNode(
             name="ingest",
-            pending_documents="{{results.load_attachments.attachments}}",
+            pending_documents="{{node_results.load_attachments.attachments}}",
         ),
     )
     generate_codebook.add_node(
@@ -64,8 +64,8 @@ async def orcheo_workflow() -> StateGraph:
             name="open_coder_prepare",
             stage="open_coder",
             research_objective="{{structured_response.research_objective}}",
-            units="{{results.ingest.units}}",
-            code_assignments=("{{results.open_coder_finalize.code_assignments_pass1}}"),
+            units="{{node_results.ingest.units}}",
+            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
             open_coding_system_prompt_template=(
                 "You are an inductive qualitative coder. "
                 "Research objective:\n{objective}\n\n"
@@ -85,8 +85,8 @@ async def orcheo_workflow() -> StateGraph:
             name="open_coder",
             ai_model="{{config.configurable.ai_model}}",
             model_kwargs={"api_key": "[[openai_api_key]]"},
-            system_prompt="{{results.open_coder_prepare.system_prompt}}",
-            input_text="{{results.open_coder_prepare.input_text}}",
+            system_prompt="{{node_results.open_coder_prepare.system_prompt}}",
+            input_text="{{node_results.open_coder_prepare.input_text}}",
             response_format=OpenCodingBatchResponse,
         ),
     )
@@ -95,8 +95,8 @@ async def orcheo_workflow() -> StateGraph:
         LLMStageFinalizeNode(
             name="open_coder_finalize",
             stage="open_coder",
-            units="{{results.ingest.units}}",
-            code_assignments=("{{results.open_coder_finalize.code_assignments_pass1}}"),
+            units="{{node_results.ingest.units}}",
+            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
         ),
     )
     generate_codebook.add_node(
@@ -104,10 +104,10 @@ async def orcheo_workflow() -> StateGraph:
         LLMStagePrepareNode(
             name="codebook_consolidator_prepare",
             stage="codebook_consolidator",
-            research_objective="{{results.open_coder_prepare.objective}}",
-            units="{{results.ingest.units}}",
-            code_assignments=("{{results.open_coder_finalize.code_assignments_pass1}}"),
-            seed_codebook="{{results.load_attachments.attachments}}",
+            research_objective="{{node_results.open_coder_prepare.objective}}",
+            units="{{node_results.ingest.units}}",
+            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
+            seed_codebook="{{node_results.load_attachments.attachments}}",
             codebook_consolidator_system_prompt_template=(
                 "You are a senior qualitative researcher consolidating open codes. "
                 "Research objective:\n{objective}\n\n"
@@ -125,8 +125,8 @@ async def orcheo_workflow() -> StateGraph:
             name="codebook_consolidator",
             ai_model="{{config.configurable.ai_model}}",
             model_kwargs={"api_key": "[[openai_api_key]]"},
-            system_prompt="{{results.codebook_consolidator_prepare.system_prompt}}",
-            input_text="{{results.codebook_consolidator_prepare.input_text}}",
+            system_prompt="{{node_results.codebook_consolidator_prepare.system_prompt}}",
+            input_text="{{node_results.codebook_consolidator_prepare.input_text}}",
             response_format=CodebookConsolidationResponse,
         ),
     )
@@ -135,17 +135,17 @@ async def orcheo_workflow() -> StateGraph:
         LLMStageFinalizeNode(
             name="codebook_consolidator_finalize",
             stage="codebook_consolidator",
-            code_assignments=("{{results.open_coder_finalize.code_assignments_pass1}}"),
-            seed_codebook="{{results.load_attachments.attachments}}",
+            code_assignments=("{{node_results.open_coder_finalize.code_assignments_pass1}}"),
+            seed_codebook="{{node_results.load_attachments.attachments}}",
         ),
     )
     generate_codebook.add_node(
         "codebook_output",
         CodebookOutputNode(
             name="codebook_output",
-            codebook="{{results.codebook_consolidator_finalize.draft_codebook}}",
-            research_objective="{{results.open_coder_prepare.objective}}",
-            units="{{results.ingest.units}}",
+            codebook="{{node_results.codebook_consolidator_finalize.draft_codebook}}",
+            research_objective="{{node_results.open_coder_prepare.objective}}",
+            units="{{node_results.ingest.units}}",
             title="Theme Finder",
             review_message=(
                 "Please review the codebook above. You can request revisions by "
@@ -158,14 +158,14 @@ async def orcheo_workflow() -> StateGraph:
     generate_codebook.add_conditional_edges(
         "ingest",
         {
-            "path": "results.ingest.halt",
+            "path": "node_results.ingest.halt",
             "mapping": {"true": "codebook_output", "false": "open_coder_prepare"},
         },
     )
     generate_codebook.add_conditional_edges(
         "open_coder_prepare",
         {
-            "path": "results.open_coder_prepare.skip_llm",
+            "path": "node_results.open_coder_prepare.skip_llm",
             "mapping": {
                 "true": "open_coder_finalize",
                 "false": "open_coder",
@@ -176,7 +176,7 @@ async def orcheo_workflow() -> StateGraph:
     generate_codebook.add_conditional_edges(
         "open_coder_finalize",
         {
-            "path": "results.open_coder_finalize.continue_llm",
+            "path": "node_results.open_coder_finalize.continue_llm",
             "mapping": {
                 "true": "open_coder_prepare",
                 "false": "codebook_consolidator_prepare",
@@ -186,7 +186,7 @@ async def orcheo_workflow() -> StateGraph:
     generate_codebook.add_conditional_edges(
         "codebook_consolidator_prepare",
         {
-            "path": "results.codebook_consolidator_prepare.skip_llm",
+            "path": "node_results.codebook_consolidator_prepare.skip_llm",
             "mapping": {
                 "true": "codebook_consolidator_finalize",
                 "false": "codebook_consolidator",
@@ -221,9 +221,9 @@ async def orcheo_workflow() -> StateGraph:
                 "File validation is performed automatically before you run. "
                 "Use the latest programmed validation result below only to decide "
                 "whether the required input data is available.\n"
-                "Latest validation result:\n{{results.validate_files}}\n\n"
+                "Latest validation result:\n{{node_results.validate_files}}\n\n"
                 "Previous research objective, if any:\n"
-                "{{results.open_coder_prepare.objective}}\n\n"
+                "{{node_results.open_coder_prepare.objective}}\n\n"
                 "Your job each turn is to decide ONE next action and return it as "
                 "a structured RoutingDecision. You do not run the pipelines "
                 "yourself; the graph executes the branch you choose. Treat the "
@@ -287,7 +287,7 @@ async def orcheo_workflow() -> StateGraph:
         "export_codebook",
         ExportCodebookNode(
             name="export_codebook",
-            codebook="{{results.codebook_consolidator_finalize.draft_codebook}}",
+            codebook="{{node_results.codebook_consolidator_finalize.draft_codebook}}",
             export_filename="codebook.csv",
             export_mime_type="text/csv",
         ),
@@ -302,7 +302,7 @@ async def orcheo_workflow() -> StateGraph:
     graph.add_conditional_edges(
         "validate_files",
         {
-            "path": "results.validate_files.ok",
+            "path": "node_results.validate_files.ok",
             "mapping": {"true": "router_agent", "false": END},
         },
     )

@@ -104,7 +104,7 @@ async def orcheo_workflow() -> StateGraph:
                 "description": "Hybrid search over MongoDB Atlas data.",
                 "graph": build_hybrid_search_tool_graph(),
                 "args_schema": HybridSearchInput,
-                "output_path": "results.format_results.markdown",
+                "output_path": "node_results.format_results.markdown",
             }
         ],
     )

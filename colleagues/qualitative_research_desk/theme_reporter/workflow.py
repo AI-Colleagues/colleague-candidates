@@ -57,8 +57,8 @@ async def orcheo_workflow() -> StateGraph:
         "ingest",
         CodedDataIngestNode(
             name="ingest",
-            source_payload="{{results.validate_files.source_payload}}",
-            approved_codebook="{{results.validate_files.approved_codebook}}",
+            source_payload="{{node_results.validate_files.source_payload}}",
+            approved_codebook="{{node_results.validate_files.approved_codebook}}",
             units_field="units",
             assignments_field="code_assignments",
             approved_codebook_field="approved_codebook",
@@ -74,10 +74,10 @@ async def orcheo_workflow() -> StateGraph:
             name="quote_selector_prepare",
             stage="quote_selector",
             research_objective="{{structured_response.research_objective}}",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            quantification="{{results.ingest.quantification}}",
+            units="{{node_results.ingest.units}}",
+            code_assignments="{{node_results.ingest.code_assignments}}",
+            approved_codebook="{{node_results.ingest.approved_codebook}}",
+            quantification="{{node_results.ingest.quantification}}",
             quote_selector_system_prompt_template=(
                 "You are selecting representative verbatim quotes for a research "
                 "report. Research objective:\n{objective}\n\n"
@@ -92,8 +92,8 @@ async def orcheo_workflow() -> StateGraph:
             name="quote_selector",
             ai_model="{{config.configurable.ai_model}}",
             model_kwargs={"api_key": "[[openai_api_key]]"},
-            system_prompt="{{results.quote_selector_prepare.system_prompt}}",
-            input_text="{{results.quote_selector_prepare.input_text}}",
+            system_prompt="{{node_results.quote_selector_prepare.system_prompt}}",
+            input_text="{{node_results.quote_selector_prepare.input_text}}",
             response_format=QuoteSelectionResponse,
         ),
     )
@@ -102,9 +102,9 @@ async def orcheo_workflow() -> StateGraph:
         LLMStageFinalizeNode(
             name="quote_selector_finalize",
             stage="quote_selector",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
+            units="{{node_results.ingest.units}}",
+            code_assignments="{{node_results.ingest.code_assignments}}",
+            approved_codebook="{{node_results.ingest.approved_codebook}}",
             selected_quotes_field="selected_quotes",
             response_schema=QuoteSelectionResponse,
         ),
@@ -115,11 +115,11 @@ async def orcheo_workflow() -> StateGraph:
             name="insight_generator_prepare",
             stage="insight_generator",
             research_objective="{{structured_response.research_objective}}",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            quantification="{{results.ingest.quantification}}",
-            selected_quotes="{{results.quote_selector_finalize.selected_quotes}}",
+            units="{{node_results.ingest.units}}",
+            code_assignments="{{node_results.ingest.code_assignments}}",
+            approved_codebook="{{node_results.ingest.approved_codebook}}",
+            quantification="{{node_results.ingest.quantification}}",
+            selected_quotes="{{node_results.quote_selector_finalize.selected_quotes}}",
             insight_generator_system_prompt_template=(
                 "You are synthesising evidence-grounded research insights. "
                 "Research objective:\n{objective}\n\n"
@@ -135,8 +135,8 @@ async def orcheo_workflow() -> StateGraph:
             name="insight_generator",
             ai_model="{{config.configurable.ai_model}}",
             model_kwargs={"api_key": "[[openai_api_key]]"},
-            system_prompt="{{results.insight_generator_prepare.system_prompt}}",
-            input_text="{{results.insight_generator_prepare.input_text}}",
+            system_prompt="{{node_results.insight_generator_prepare.system_prompt}}",
+            input_text="{{node_results.insight_generator_prepare.input_text}}",
             response_format=InsightGenerationResponse,
         ),
     )
@@ -145,10 +145,10 @@ async def orcheo_workflow() -> StateGraph:
         LLMStageFinalizeNode(
             name="insight_generator_finalize",
             stage="insight_generator",
-            units="{{results.ingest.units}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            quantification="{{results.ingest.quantification}}",
+            units="{{node_results.ingest.units}}",
+            code_assignments="{{node_results.ingest.code_assignments}}",
+            approved_codebook="{{node_results.ingest.approved_codebook}}",
+            quantification="{{node_results.ingest.quantification}}",
             candidate_insights_field="candidate_insights",
             response_schema=InsightGenerationResponse,
         ),
@@ -157,12 +157,12 @@ async def orcheo_workflow() -> StateGraph:
         "insight_critic",
         InsightCriticNode(
             name="insight_critic",
-            units="{{results.ingest.units}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            segment_comparisons="{{results.ingest.segment_comparisons}}",
+            units="{{node_results.ingest.units}}",
+            approved_codebook="{{node_results.ingest.approved_codebook}}",
+            code_assignments="{{node_results.ingest.code_assignments}}",
+            segment_comparisons="{{node_results.ingest.segment_comparisons}}",
             candidate_insights=(
-                "{{results.insight_generator_finalize.candidate_insights}}"
+                "{{node_results.insight_generator_finalize.candidate_insights}}"
             ),
             candidate_insights_field="candidate_insights",
         ),
@@ -171,7 +171,7 @@ async def orcheo_workflow() -> StateGraph:
         "recommendation_generator",
         RecommendationGeneratorNode(
             name="recommendation_generator",
-            candidate_insights="{{results.insight_critic.candidate_insights}}",
+            candidate_insights="{{node_results.insight_critic.candidate_insights}}",
             candidate_insights_field="candidate_insights",
             recommendations_field="recommendations",
             approved_insight_ids_field="approved_insight_ids",
@@ -182,19 +182,19 @@ async def orcheo_workflow() -> StateGraph:
         ReportOutputNode(
             name="report_output",
             research_objective="{{structured_response.research_objective}}",
-            source_payload="{{results.validate_files.source_payload}}",
-            units="{{results.ingest.units}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            quantification="{{results.ingest.quantification}}",
-            cooccurrence="{{results.ingest.cooccurrence}}",
-            segment_breakdowns="{{results.ingest.segment_breakdowns}}",
-            segment_comparisons="{{results.ingest.segment_comparisons}}",
-            selected_quotes="{{results.quote_selector_finalize.selected_quotes}}",
-            candidate_insights="{{results.recommendation_generator.candidate_insights}}",
-            recommendations="{{results.recommendation_generator.recommendations}}",
+            source_payload="{{node_results.validate_files.source_payload}}",
+            units="{{node_results.ingest.units}}",
+            approved_codebook="{{node_results.ingest.approved_codebook}}",
+            code_assignments="{{node_results.ingest.code_assignments}}",
+            quantification="{{node_results.ingest.quantification}}",
+            cooccurrence="{{node_results.ingest.cooccurrence}}",
+            segment_breakdowns="{{node_results.ingest.segment_breakdowns}}",
+            segment_comparisons="{{node_results.ingest.segment_comparisons}}",
+            selected_quotes="{{node_results.quote_selector_finalize.selected_quotes}}",
+            candidate_insights="{{node_results.recommendation_generator.candidate_insights}}",
+            recommendations="{{node_results.recommendation_generator.recommendations}}",
             approved_insight_ids=(
-                "{{results.recommendation_generator.approved_insight_ids}}"
+                "{{node_results.recommendation_generator.approved_insight_ids}}"
             ),
             ingest_node_name="ingest",
         ),
@@ -204,14 +204,14 @@ async def orcheo_workflow() -> StateGraph:
     generate_report.add_conditional_edges(
         "ingest",
         {
-            "path": "results.ingest.halt",
+            "path": "node_results.ingest.halt",
             "mapping": {"true": "report_output", "false": "quote_selector_prepare"},
         },
     )
     generate_report.add_conditional_edges(
         "quote_selector_prepare",
         {
-            "path": "results.quote_selector_prepare.skip_llm",
+            "path": "node_results.quote_selector_prepare.skip_llm",
             "mapping": {
                 "true": "quote_selector_finalize",
                 "false": "quote_selector",
@@ -223,7 +223,7 @@ async def orcheo_workflow() -> StateGraph:
     generate_report.add_conditional_edges(
         "insight_generator_prepare",
         {
-            "path": "results.insight_generator_prepare.skip_llm",
+            "path": "node_results.insight_generator_prepare.skip_llm",
             "mapping": {
                 "true": "insight_generator_finalize",
                 "false": "insight_generator",
@@ -262,13 +262,13 @@ async def orcheo_workflow() -> StateGraph:
                 "Use only the programmed validation facts below to decide whether "
                 "the required coded data is available. Do not infer file validity "
                 "from chat history or raw file text.\n"
-                "Validation ok: {{results.validate_files.ok}}\n"
-                "Validation summary: {{results.validate_files.assistant_message}}\n"
-                "Coded data file: {{results.validate_files.data_file}}\n"
-                "Optional codebook file: {{results.validate_files.codebook_file}}\n"
-                "Validation errors: {{results.validate_files.errors}}\n\n"
+                "Validation ok: {{node_results.validate_files.ok}}\n"
+                "Validation summary: {{node_results.validate_files.assistant_message}}\n"
+                "Coded data file: {{node_results.validate_files.data_file}}\n"
+                "Optional codebook file: {{node_results.validate_files.codebook_file}}\n"
+                "Validation errors: {{node_results.validate_files.errors}}\n\n"
                 "Previous research objective, if any:\n"
-                "{{results.report_output.research_objective}}\n\n"
+                "{{node_results.report_output.research_objective}}\n\n"
                 "Your job each turn is to decide ONE next action and return it as "
                 "a structured RoutingDecision. You do not run the pipelines "
                 "yourself; the graph executes the branch you choose. Treat the "
@@ -327,20 +327,20 @@ async def orcheo_workflow() -> StateGraph:
         "export_report",
         ExportReportNode(
             name="export_report",
-            research_objective="{{results.report_output.research_objective}}",
-            source_payload="{{results.validate_files.source_payload}}",
-            units="{{results.ingest.units}}",
-            approved_codebook="{{results.ingest.approved_codebook}}",
-            code_assignments="{{results.ingest.code_assignments}}",
-            quantification="{{results.ingest.quantification}}",
-            cooccurrence="{{results.ingest.cooccurrence}}",
-            segment_breakdowns="{{results.ingest.segment_breakdowns}}",
-            segment_comparisons="{{results.ingest.segment_comparisons}}",
-            selected_quotes="{{results.quote_selector_finalize.selected_quotes}}",
-            candidate_insights="{{results.recommendation_generator.candidate_insights}}",
-            recommendations="{{results.recommendation_generator.recommendations}}",
+            research_objective="{{node_results.report_output.research_objective}}",
+            source_payload="{{node_results.validate_files.source_payload}}",
+            units="{{node_results.ingest.units}}",
+            approved_codebook="{{node_results.ingest.approved_codebook}}",
+            code_assignments="{{node_results.ingest.code_assignments}}",
+            quantification="{{node_results.ingest.quantification}}",
+            cooccurrence="{{node_results.ingest.cooccurrence}}",
+            segment_breakdowns="{{node_results.ingest.segment_breakdowns}}",
+            segment_comparisons="{{node_results.ingest.segment_comparisons}}",
+            selected_quotes="{{node_results.quote_selector_finalize.selected_quotes}}",
+            candidate_insights="{{node_results.recommendation_generator.candidate_insights}}",
+            recommendations="{{node_results.recommendation_generator.recommendations}}",
             approved_insight_ids=(
-                "{{results.recommendation_generator.approved_insight_ids}}"
+                "{{node_results.recommendation_generator.approved_insight_ids}}"
             ),
         ),
     )
@@ -371,7 +371,7 @@ async def orcheo_workflow() -> StateGraph:
     graph.add_conditional_edges(
         "validate_files",
         {
-            "path": "results.validate_files.ok",
+            "path": "node_results.validate_files.ok",
             "mapping": {"true": "router_agent", "false": END},
         },
     )

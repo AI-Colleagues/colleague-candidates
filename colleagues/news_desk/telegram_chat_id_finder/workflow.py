@@ -169,7 +169,7 @@ async def orcheo_workflow() -> StateGraph:
             method="GET",
             url=(
                 "https://api.telegram.org/bot"
-                "{{results.load_telegram_token.telegram_token}}/getUpdates"
+                "{{node_results.load_telegram_token.telegram_token}}/getUpdates"
             ),
             timeout=30.0,
             raise_for_status=True,

@@ -106,7 +106,7 @@ async def orcheo_workflow() -> StateGraph:
         MessageTelegramNode(
             name="send_telegram",
             token="[[telegram_token]]",
-            chat_id="{{results.telegram_listener.reply_target.chat_id}}",
+            chat_id="{{node_results.telegram_listener.reply_target.chat_id}}",
         ),
     )
     graph.add_node(
@@ -114,7 +114,7 @@ async def orcheo_workflow() -> StateGraph:
         MessageDiscordNode(
             name="send_discord",
             token="[[discord_bot_token]]",
-            channel_id="{{results.discord_listener.reply_target.channel_id}}",
+            channel_id="{{node_results.discord_listener.reply_target.channel_id}}",
         ),
     )
     graph.add_node(
@@ -123,11 +123,11 @@ async def orcheo_workflow() -> StateGraph:
             name="send_qq",
             app_id="[[qq_app_id]]",
             client_secret="[[qq_client_secret]]",
-            openid="{{results.qq_listener.reply_target.openid}}",
-            group_openid="{{results.qq_listener.reply_target.group_openid}}",
-            channel_id="{{results.qq_listener.reply_target.channel_id}}",
-            guild_id="{{results.qq_listener.reply_target.guild_id}}",
-            msg_id="{{results.qq_listener.reply_target.msg_id}}",
+            openid="{{node_results.qq_listener.reply_target.openid}}",
+            group_openid="{{node_results.qq_listener.reply_target.group_openid}}",
+            channel_id="{{node_results.qq_listener.reply_target.channel_id}}",
+            guild_id="{{node_results.qq_listener.reply_target.guild_id}}",
+            msg_id="{{node_results.qq_listener.reply_target.msg_id}}",
         ),
     )
 

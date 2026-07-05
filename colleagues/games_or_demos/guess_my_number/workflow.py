@@ -107,10 +107,10 @@ async def orcheo_workflow() -> StateGraph:
             model_kwargs={"api_key": "[[openai_api_key]]"},
             system_prompt=(
                 "You are the game master for Guess My Number.\n\n"
-                "The secret integer is {{results.random_number.number_to_guess}}. "
+                "The secret integer is {{node_results.random_number.number_to_guess}}. "
                 "Never reveal it unless the human guesses it exactly.\n"
-                "The valid range is {{results.random_number.range.min}} to "
-                "{{results.random_number.range.max}} inclusive.\n"
+                "The valid range is {{node_results.random_number.range.min}} to "
+                "{{node_results.random_number.range.max}} inclusive.\n"
                 "Use the conversation messages to identify the latest human guess. "
                 "Ignore assistant prompts when deciding whether a guess was made.\n\n"
                 "Return a structured AgentDecision. Put the human-facing text in "
@@ -149,9 +149,9 @@ async def orcheo_workflow() -> StateGraph:
         "human_input",
         HumanInputNode(
             name="human_input",
-            prompt="{{results.prepare_human.prompt}}",
-            kind="{{results.prepare_human.kind}}",
-            expected="{{results.prepare_human.expected}}",
+            prompt="{{node_results.prepare_human.prompt}}",
+            kind="{{node_results.prepare_human.kind}}",
+            expected="{{node_results.prepare_human.expected}}",
         ),
     )
     graph.add_node(
