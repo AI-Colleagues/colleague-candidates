@@ -496,7 +496,7 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         LLMStagePrepareNode(
             name="insight_generator_prepare",
             stage="insight_generator",
-            research_objective="{{structured_response.research_objective}}",
+            research_objective="{{node_results.quote_selector_prepare.objective}}",
             units="{{node_results.report_ingest.units}}",
             code_assignments="{{node_results.report_ingest.code_assignments}}",
             approved_codebook="{{node_results.report_ingest.approved_codebook}}",
@@ -563,7 +563,7 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
         "report_output",
         ReportOutputNode(
             name="report_output",
-            research_objective="{{structured_response.research_objective}}",
+            research_objective="{{node_results.quote_selector_prepare.objective}}",
             source_payload="{{node_results.resolve_inputs.report_source_payload}}",
             units="{{node_results.report_ingest.units}}",
             approved_codebook="{{node_results.report_ingest.approved_codebook}}",
