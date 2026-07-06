@@ -129,6 +129,12 @@ class TestResolveMergedInputsNode:
         assert result["report_chained_ready"] is False
         assert result["has_draft_codebook"] is False
         assert result["has_recoded_data"] is False
+        assert result["codebook_gen_status"] == (
+            "not ready: no valid files were uploaded in this conversation"
+        )
+        assert result["recode_status"].startswith("not ready:")
+        assert result["report_status"].startswith("not ready:")
+        assert result["previous_objective"] == "(none)"
 
     async def test_non_dict_node_results_is_tolerated(self) -> None:
         """A missing or non-dict ``node_results`` value falls back to empty."""
@@ -218,6 +224,9 @@ class TestResolveMergedInputsNode:
         assert result["report_chained_ready"] is False
         assert result["report_ready"] is True
         assert result["report_source_payload"] == "coded-data"
+        assert result["report_status"] == (
+            "ready: the uploaded coded-data file will be used"
+        )
 
     async def test_report_prefers_freshly_chained_results_over_stale_upload(
         self,
@@ -247,6 +256,9 @@ class TestResolveMergedInputsNode:
         assert result["has_recoded_data"] is True
         # Chained results are used directly; no upload fallback is populated.
         assert result["report_source_payload"] is None
+        assert result["report_status"] == (
+            "ready: recoded results produced in this conversation will be used"
+        )
 
     async def test_report_codebook_prefers_directly_validated_codebook(self) -> None:
         """A codebook validated directly for reporting skips both fallbacks."""
@@ -290,3 +302,167 @@ class TestResolveMergedInputsNode:
         assert result["report_chained_ready"] is False
         assert result["report_uploaded_ready"] is False
         assert result["report_source_payload"] == "recode-data"
+
+    async def test_status_lines_surface_validation_errors(self) -> None:
+        """Not-ready statuses relay the validator error strings."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "validate_report_files": {
+                        "ok": False,
+                        "errors": ["No valid data file found.", "bad.csv: unreadable"],
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["report_status"] == (
+            "not ready: No valid data file found.; bad.csv: unreadable"
+        )
+
+    async def test_previous_objective_prefers_report_then_prepare_nodes(self) -> None:
+        """The previous objective is recovered from earlier pipeline runs."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "open_coder_prepare": {"objective": "understand churn"},
+                    "quote_selector_prepare": {"objective": "(not provided)"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "understand churn"
+
+    async def test_previous_objective_prefers_freshly_recoded_objective(
+        self,
+    ) -> None:
+        """A newer codebook-stage objective wins over a stale report objective."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                    "quote_selector_prepare": {"objective": "objective A"},
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {
+                        "_report_objective_seen": "objective A",
+                        "_codebook_objective_seen": "objective A",
+                        "_previous_objective_source": "report",
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "codebook"
+
+    async def test_previous_objective_source_report_on_first_fresh_report(
+        self,
+    ) -> None:
+        """A first-seen report objective wins when no codebook objective exists."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective A"
+        assert result["_previous_objective_source"] == "report"
+
+    async def test_previous_objective_source_report_when_unchanged_no_prior_source(
+        self,
+    ) -> None:
+        """An unchanged report objective still wins when no source was recorded."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                    "resolve_inputs": {"_report_objective_seen": "objective A"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective A"
+        assert result["_previous_objective_source"] == "report"
+
+    async def test_previous_objective_source_codebook_when_unchanged_no_prior_source(
+        self,
+    ) -> None:
+        """An unchanged codebook objective wins when no report objective exists."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {"_codebook_objective_seen": "objective B"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "codebook"
+
+    async def test_previous_objective_falls_back_to_codebook_without_report(
+        self,
+    ) -> None:
+        """The prior source is 'report' but no report objective exists this turn."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {
+                        "_previous_objective_source": "report",
+                        "_codebook_objective_seen": "objective B",
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "report"
+
+    async def test_previous_objective_stays_stable_when_neither_stage_changed(
+        self,
+    ) -> None:
+        """An unrelated pipeline run (e.g. recoding) does not flip the objective."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                    "quote_selector_prepare": {"objective": "objective A"},
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {
+                        "_report_objective_seen": "objective A",
+                        "_codebook_objective_seen": "objective B",
+                        "_previous_objective_source": "codebook",
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "codebook"

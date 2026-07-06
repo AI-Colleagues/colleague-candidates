@@ -2,11 +2,15 @@
 # name = "Theme Analyst"
 # handle = "theme-analyst"
 # description = "Generate codebooks, recode data, and synthesize theme reports."
-# version = "0.1.0"
+# version = "0.1.1"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-14"
 # subtitle = "End-to-end theme analysis"
+#
+# [[updates]]
+# version = "0.1.1"
+# summary = "Fix report routing after recoding via merged readiness statuses."
 # ///
 
 """Theme Analyst: generate codebooks, recode data, and render reports."""
@@ -70,7 +74,7 @@ class RoutingDecision(BaseModel):
 class ResolveMergedInputsNode(CodeNode):
     """Resolve uploaded or previously produced artefacts for merged branches."""
 
-    async def run(self, state, config):
+    async def run(self, state, config):  # noqa: C901, PLR0912, PLR0915
         """Emit merged branch inputs and readiness flags."""
         del config
 
@@ -89,6 +93,12 @@ class ResolveMergedInputsNode(CodeNode):
         def section(name: str) -> dict:
             value = node_results.get(name)
             return value if isinstance(value, dict) else {}
+
+        def error_text(validation: dict) -> str:
+            errors = validation.get("errors")
+            if isinstance(errors, list) and errors:
+                return "; ".join([str(item) for item in errors])
+            return "no valid files were uploaded in this conversation"
 
         validate_codebook = section("validate_codebook_files")
         validate_recode = section("validate_recode_files")
@@ -132,14 +142,95 @@ class ResolveMergedInputsNode(CodeNode):
             if report_source_payload is None:
                 report_source_payload = recode_source_payload
 
+        # The router agent's prompt renders these statuses. They must be plain
+        # strings: list- or dict-valued template paths are left unrendered in
+        # multi-placeholder prompt strings, and the validators only run on the
+        # thread's first turn, so their raw ok/errors fields go stale as soon
+        # as a pipeline produces results in-conversation.
+        codebook_gen_ready = has_content(codebook_gen_source)
+        if codebook_gen_ready:
+            codebook_gen_status = "ready: uploaded raw data will be used"
+        else:
+            codebook_gen_status = "not ready: " + error_text(validate_codebook)
+
+        recode_ready = has_content(recode_source_payload) and has_content(
+            recode_codebook
+        )
+        if recode_ready:
+            recode_status = (
+                "ready: raw data and a codebook are available from uploads or "
+                "earlier runs in this conversation"
+            )
+        else:
+            recode_status = "not ready: " + error_text(validate_recode)
+
+        if report_chained_ready:
+            report_status = (
+                "ready: recoded results produced in this conversation will be used"
+            )
+        elif report_uploaded_ready:
+            report_status = "ready: the uploaded coded-data file will be used"
+        else:
+            report_status = "not ready: " + error_text(validate_report)
+
+        def clean_objective(value):
+            if has_content(value) and value != "(not provided)":
+                return value
+            return None
+
+        report_objective = clean_objective(
+            section("report_output").get("research_objective")
+        ) or clean_objective(section("quote_selector_prepare").get("objective"))
+        codebook_objective = clean_objective(
+            section("open_coder_prepare").get("objective")
+        )
+
+        # node_results persists across the whole conversation thread, so both
+        # candidates above can be simultaneously present long after either
+        # pipeline last ran. Only one pipeline runs per turn, so we detect
+        # which candidate just changed relative to our own previous output
+        # (self-referential, since node_results.resolve_inputs holds what this
+        # node returned last time) and prefer that one as the more recent
+        # objective, instead of always favouring the report stage.
+        own_previous = section("resolve_inputs")
+        report_is_fresh = report_objective is not None and report_objective != (
+            own_previous.get("_report_objective_seen")
+        )
+        codebook_is_fresh = codebook_objective is not None and codebook_objective != (
+            own_previous.get("_codebook_objective_seen")
+        )
+        previous_source = own_previous.get("_previous_objective_source")
+
+        if report_is_fresh and not codebook_is_fresh:
+            objective_source = "report"
+        elif codebook_is_fresh and not report_is_fresh:
+            objective_source = "codebook"
+        elif previous_source in ("report", "codebook"):
+            objective_source = previous_source
+        elif report_objective is not None:
+            objective_source = "report"
+        elif codebook_objective is not None:
+            objective_source = "codebook"
+        else:
+            objective_source = None
+
+        if objective_source == "codebook" and codebook_objective is not None:
+            previous_objective = codebook_objective
+        elif report_objective is not None:
+            previous_objective = report_objective
+        elif codebook_objective is not None:
+            previous_objective = codebook_objective
+        else:
+            previous_objective = "(none)"
+
         return {
             "draft_codebook": draft_codebook,
-            "codebook_gen_ready": has_content(codebook_gen_source),
+            "codebook_gen_ready": codebook_gen_ready,
+            "codebook_gen_status": codebook_gen_status,
             "recode_source_payload": recode_source_payload,
             "recode_codebook": recode_codebook,
-            "recode_ready": (
-                has_content(recode_source_payload) and has_content(recode_codebook)
-            ),
+            "recode_ready": recode_ready,
+            "recode_status": recode_status,
             "report_source_payload": report_source_payload,
             "report_codebook": report_codebook,
             "report_units": report_units,
@@ -147,10 +238,15 @@ class ResolveMergedInputsNode(CodeNode):
             "report_ready": report_uploaded_ready or report_chained_ready,
             "report_uploaded_ready": report_uploaded_ready,
             "report_chained_ready": report_chained_ready,
+            "report_status": report_status,
             "has_draft_codebook": has_content(draft_codebook),
             "has_recoded_data": (
                 has_content(report_units) and has_content(report_assignments)
             ),
+            "previous_objective": previous_objective,
+            "_report_objective_seen": report_objective,
+            "_codebook_objective_seen": codebook_objective,
+            "_previous_objective_source": objective_source,
         }
 
 
@@ -658,42 +754,24 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             system_prompt=(
                 "You are the Theme Analyst, an AI qualitative research assistant "
                 "that combines Theme Finder, Theme Coder, and Theme Reporter.\n\n"
-                "File validation is performed automatically before you run. Use "
-                "only the programmed validation facts below to decide whether the "
-                "required inputs are available. Do not infer file validity from "
+                "Pipeline readiness is computed automatically before you run. The "
+                "statuses below already combine files uploaded in this "
+                "conversation with results produced by earlier pipeline runs in "
+                "this conversation, so treat them as the only source of truth "
+                "about input availability. Do not infer input availability from "
                 "chat history or raw file text.\n\n"
-                "Codebook generation validation ok: "
-                "{{node_results.validate_codebook_files.ok}}\n"
-                "Codebook generation validation summary: "
-                "{{node_results.validate_codebook_files.assistant_message}}\n"
-                "Codebook generation validation errors: "
-                "{{node_results.validate_codebook_files.errors}}\n\n"
-                "Recoding validation ok: {{node_results.validate_recode_files.ok}}\n"
-                "Recoding validation summary: "
-                "{{node_results.validate_recode_files.assistant_message}}\n"
-                "Recoding validation errors: "
-                "{{node_results.validate_recode_files.errors}}\n\n"
-                "Report validation ok: {{node_results.validate_report_files.ok}}\n"
-                "Report validation summary: "
-                "{{node_results.validate_report_files.assistant_message}}\n"
-                "Report validation errors: "
-                "{{node_results.validate_report_files.errors}}\n\n"
-                "Merged branch readiness:\n"
-                "- Codebook generation ready from uploaded raw data: "
-                "{{node_results.resolve_inputs.codebook_gen_ready}}\n"
+                "Pipeline readiness:\n"
+                "- generate_codebook: "
+                "{{node_results.resolve_inputs.codebook_gen_status}}\n"
+                "- recode_data: {{node_results.resolve_inputs.recode_status}}\n"
+                "- generate_report: {{node_results.resolve_inputs.report_status}}\n\n"
+                "Other facts:\n"
                 "- Draft codebook available: "
                 "{{node_results.resolve_inputs.has_draft_codebook}}\n"
-                "- Recoding ready from uploaded or generated inputs: "
-                "{{node_results.resolve_inputs.recode_ready}}\n"
-                "- Report ready from uploaded coded data or recoded results: "
-                "{{node_results.resolve_inputs.report_ready}}\n"
-                "- Report can use uploaded coded data: "
-                "{{node_results.resolve_inputs.report_uploaded_ready}}\n"
-                "- Report uses recoded results from this workflow when "
-                "available: {{node_results.resolve_inputs.report_chained_ready}}\n\n"
-                "Previous research objective, if any:\n"
-                "{{node_results.open_coder_prepare.objective}}\n"
-                "{{node_results.report_output.research_objective}}\n\n"
+                "- Recoded data available from this conversation: "
+                "{{node_results.resolve_inputs.has_recoded_data}}\n"
+                "- Previous research objective, if any: "
+                "{{node_results.resolve_inputs.previous_objective}}\n\n"
                 "Your job each turn is to decide ONE next action and return it as "
                 "a structured RoutingDecision. You do not run the pipelines "
                 "yourself; the graph executes the branch you choose. Treat the "
@@ -701,47 +779,46 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
                 "collected after review prompts.\n\n"
                 "Set `branch` to one of:\n"
                 "- `generate_codebook` - run the codebook generation pipeline and "
-                "return a draft codebook. Requires valid raw qualitative data and "
-                "an available research objective.\n"
+                "return a draft codebook. Requires readiness and an available "
+                "research objective.\n"
                 "- `export_codebook` - convert the current draft codebook into a "
                 "downloadable CSV. Route here when the user approves the codebook.\n"
                 "- `recode_data` - run the recoding pipeline and return a coded "
-                "data CSV. Requires valid raw data and a valid codebook CSV.\n"
+                "data CSV. Requires readiness.\n"
                 "- `export_coded_data` - regenerate the coded-data CSV download "
                 "link. Route here only if the user asks for the file again later.\n"
                 "- `generate_report` - run the report pipeline and return the "
-                "complete Markdown report plus a download link. Requires valid "
-                "coded data and an available research objective.\n"
+                "complete Markdown report plus a download link. Requires "
+                "readiness and an available research objective.\n"
                 "- `export_report` - regenerate the report download link. Route "
                 "here only if the user asks for the file again later.\n"
                 "- `respond` - reply to the user directly in `assistant_message` "
                 "instead of running a pipeline.\n\n"
                 "Rules:\n"
-                "- If validation fails for the requested pipeline, do not route "
-                "to that pipeline unless the matching merged readiness flag above "
-                "is true. Reply with the matching validation errors or summary "
-                "when the merged readiness flag is false.\n"
+                "- Route to a pipeline only when its readiness status above "
+                "starts with 'ready'. When it is 'not ready', set `branch` to "
+                "`respond` and relay the reason given on that status line.\n"
                 "- If a research objective is missing for `generate_codebook` or "
-                "`generate_report`, set `branch` to `respond` and ask for it.\n"
+                "`generate_report`, set `branch` to `respond` and ask for it. The "
+                "previous objective above counts as available.\n"
                 "- If the user asks to generate, redo, rerun, or revise the "
-                "codebook, route to `generate_codebook` when a research objective "
-                "is available and either codebook generation validation is ok or "
-                "the codebook generation readiness flag is true.\n"
+                "codebook, route to `generate_codebook` when it is ready and a "
+                "research objective is available.\n"
                 "- If the user asks to code, recode, rerun, or revise coded data, "
-                "route to `recode_data` when merged recoding readiness is true.\n"
+                "route to `recode_data` when it is ready.\n"
                 "- If the user asks to generate, redo, rerun, or revise the "
-                "report, route to `generate_report` when a research objective is "
-                "available and merged report readiness is true.\n"
+                "report, route to `generate_report` when it is ready and a "
+                "research objective is available.\n"
                 "- When routing to `generate_codebook` or `generate_report`, "
                 "extract the user's research objective into `research_objective`. "
                 "If reusing the previous objective, return that exact objective. "
                 "Do not invent one.\n"
                 "- Only route to a pipeline branch when the user's intent is "
                 "clear. Keep direct replies short and action-oriented.\n\n"
-                "When validation fails, the correct shape is:\n"
+                "When the requested pipeline is not ready, the correct shape is:\n"
                 '{"branch":"respond",'
                 '"assistant_message":"Please correct the uploaded files: '
-                '<brief errors>"}'
+                '<reason from the readiness status>"}'
             ),
             response_format=RoutingDecision,
             use_graph_chat_history=False,
