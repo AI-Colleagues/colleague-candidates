@@ -364,6 +364,84 @@ class TestResolveMergedInputsNode:
         assert result["previous_objective"] == "objective B"
         assert result["_previous_objective_source"] == "codebook"
 
+    async def test_previous_objective_source_report_on_first_fresh_report(
+        self,
+    ) -> None:
+        """A first-seen report objective wins when no codebook objective exists."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective A"
+        assert result["_previous_objective_source"] == "report"
+
+    async def test_previous_objective_source_report_when_unchanged_no_prior_source(
+        self,
+    ) -> None:
+        """An unchanged report objective still wins when no source was recorded."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                    "resolve_inputs": {"_report_objective_seen": "objective A"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective A"
+        assert result["_previous_objective_source"] == "report"
+
+    async def test_previous_objective_source_codebook_when_unchanged_no_prior_source(
+        self,
+    ) -> None:
+        """An unchanged codebook objective wins when no report objective exists."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {"_codebook_objective_seen": "objective B"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "codebook"
+
+    async def test_previous_objective_falls_back_to_codebook_without_report(
+        self,
+    ) -> None:
+        """The prior source is 'report' but no report objective exists this turn."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {
+                        "_previous_objective_source": "report",
+                        "_codebook_objective_seen": "objective B",
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "report"
+
     async def test_previous_objective_stays_stable_when_neither_stage_changed(
         self,
     ) -> None:
