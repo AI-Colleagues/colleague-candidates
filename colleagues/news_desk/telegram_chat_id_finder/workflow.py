@@ -37,7 +37,7 @@ class FormatTelegramChatIdNode(CodeNode):
 
     async def run(self, state, config):  # noqa: C901, PLR0912
         """Return the ChatKit reply and result metadata for the latest chat."""
-        http_result = state.get("results", {}).get("fetch_updates", {})
+        http_result = state.get("node_results", {}).get("fetch_updates", {})
         payload = http_result.get("json") if isinstance(http_result, dict) else {}
         if not isinstance(payload, dict):
             payload = {}
@@ -111,7 +111,7 @@ class FormatTelegramChatIdNode(CodeNode):
             )
             lines += ["", paperboy_line]
             assistant_message = "\n".join(lines)
-            result = {
+            return {
                 "assistant_message": assistant_message,
                 "chat_id": chat.get("id"),
                 "chat_type": chat.get("type"),
@@ -119,12 +119,6 @@ class FormatTelegramChatIdNode(CodeNode):
                 "first_name": chat.get("first_name"),
                 "title": chat.get("title"),
                 "update_count": len(updates),
-            }
-            return {
-                "assistant_message": assistant_message,
-                "results": {
-                    "get_chat_id": result,
-                },
             }
 
         assistant_message = (
@@ -136,14 +130,9 @@ class FormatTelegramChatIdNode(CodeNode):
         )
         return {
             "assistant_message": assistant_message,
-            "results": {
-                "get_chat_id": {
-                    "assistant_message": assistant_message,
-                    "chat_id": None,
-                    "chat_type": self.chat_type,
-                    "update_count": len(updates),
-                },
-            },
+            "chat_id": None,
+            "chat_type": self.chat_type,
+            "update_count": len(updates),
         }
 
 

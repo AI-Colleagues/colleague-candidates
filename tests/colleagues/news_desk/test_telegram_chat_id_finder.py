@@ -12,7 +12,7 @@ workflow = load_workflow_module("news_desk/telegram_chat_id_finder")
 def _state_with_updates(updates: list) -> State:
     return State(
         {
-            "results": {
+            "node_results": {
                 "fetch_updates": {"json": {"ok": True, "result": updates}},
             }
         }
@@ -25,7 +25,7 @@ class TestFormatTelegramChatIdNode:
     async def test_raises_when_telegram_response_is_not_ok(self) -> None:
         """A non-dict HTTP result is treated as an empty, failing payload."""
         node = workflow.FormatTelegramChatIdNode(name="get_chat_id")
-        state = State({"results": {"fetch_updates": "not-a-dict"}})
+        state = State({"node_results": {"fetch_updates": "not-a-dict"}})
 
         with pytest.raises(ValueError, match="Telegram API returned an error"):
             await node.run(state, {})
@@ -33,7 +33,7 @@ class TestFormatTelegramChatIdNode:
     async def test_raises_when_json_payload_is_not_a_dict(self) -> None:
         """A non-dict ``json`` field on an otherwise dict HTTP result fails too."""
         node = workflow.FormatTelegramChatIdNode(name="get_chat_id")
-        state = State({"results": {"fetch_updates": {"json": "oops"}}})
+        state = State({"node_results": {"fetch_updates": {"json": "oops"}}})
 
         with pytest.raises(ValueError, match="Telegram API returned an error"):
             await node.run(state, {})
@@ -43,7 +43,7 @@ class TestFormatTelegramChatIdNode:
         node = workflow.FormatTelegramChatIdNode(name="get_chat_id")
         state = State(
             {
-                "results": {
+                "node_results": {
                     "fetch_updates": {"json": {"ok": True, "result": "oops"}},
                 }
             }
@@ -52,8 +52,8 @@ class TestFormatTelegramChatIdNode:
         result = await node.run(state, {})
 
         assert "couldn't find" in result["assistant_message"]
-        assert result["results"]["get_chat_id"]["chat_id"] is None
-        assert result["results"]["get_chat_id"]["update_count"] == 0
+        assert result["chat_id"] is None
+        assert result["update_count"] == 0
 
     async def test_skips_non_dict_and_unmatched_updates_before_finding_chat(
         self,
@@ -89,9 +89,8 @@ class TestFormatTelegramChatIdNode:
 
         result = await node.run(state, {})
 
-        payload = result["results"]["get_chat_id"]
-        assert payload["chat_id"] == 444
-        assert payload["first_name"] == "Ada"
+        assert result["chat_id"] == 444
+        assert result["first_name"] == "Ada"
         assert "👤 Name: Ada Lovelace" in result["assistant_message"]
         assert "🔗 Username: @ada" in result["assistant_message"]
 

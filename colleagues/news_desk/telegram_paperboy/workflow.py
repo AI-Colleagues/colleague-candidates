@@ -52,7 +52,7 @@ class DetectTriggerNode(CodeNode):
             isinstance(inputs, dict)
             and (inputs.get("listener") or inputs.get("platform"))
         )
-        return {"results": {"detect_trigger": {"is_listener": is_listener}}}
+        return {"is_listener": is_listener}
 
 
 class FormatDigestNode(CodeNode):
@@ -60,7 +60,7 @@ class FormatDigestNode(CodeNode):
 
     async def run(self, state, config):
         """Return the digest content string and the delivered item IDs."""
-        results = state.get("results", {})
+        results = state.get("node_results", {})
         if not isinstance(results, dict):
             results = {}
         html_result = results.get("escape_titles", {})
@@ -91,13 +91,9 @@ class FormatDigestNode(CodeNode):
 
         content = "\n".join(lines) if lines else "No news updates today."
         return {
-            "results": {
-                "format_digest": {
-                    "content": "Today's RSS News:\n\n" + content,
-                    "ids": ids,
-                    "has_items": bool(ids),
-                }
-            }
+            "content": "Today's RSS News:\n\n" + content,
+            "ids": ids,
+            "has_items": bool(ids),
         }
 
 
@@ -112,7 +108,7 @@ class ResolveTargetChatNode(CodeNode):
 
     async def run(self, state, config):
         """Return the chat ID from the inbound Telegram listener event."""
-        results = state.get("results", {})
+        results = state.get("node_results", {})
         if not isinstance(results, dict):
             results = {}
         listener = results.get("telegram_listener", {})
@@ -126,7 +122,7 @@ class ResolveTargetChatNode(CodeNode):
             target = str(chat_id)
         else:
             target = self.default_chat_id
-        return {"results": {"resolve_target": {"chat_id": target}}}
+        return {"chat_id": target}
 
 
 async def orcheo_workflow() -> StateGraph:
