@@ -338,3 +338,53 @@ class TestResolveMergedInputsNode:
         result = await node.run(state, {})
 
         assert result["previous_objective"] == "understand churn"
+
+    async def test_previous_objective_prefers_freshly_recoded_objective(
+        self,
+    ) -> None:
+        """A newer codebook-stage objective wins over a stale report objective."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                    "quote_selector_prepare": {"objective": "objective A"},
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {
+                        "_report_objective_seen": "objective A",
+                        "_codebook_objective_seen": "objective A",
+                        "_previous_objective_source": "report",
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "codebook"
+
+    async def test_previous_objective_stays_stable_when_neither_stage_changed(
+        self,
+    ) -> None:
+        """An unrelated pipeline run (e.g. recoding) does not flip the objective."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "report_output": {"research_objective": "objective A"},
+                    "quote_selector_prepare": {"objective": "objective A"},
+                    "open_coder_prepare": {"objective": "objective B"},
+                    "resolve_inputs": {
+                        "_report_objective_seen": "objective A",
+                        "_codebook_objective_seen": "objective B",
+                        "_previous_objective_source": "codebook",
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "objective B"
+        assert result["_previous_objective_source"] == "codebook"

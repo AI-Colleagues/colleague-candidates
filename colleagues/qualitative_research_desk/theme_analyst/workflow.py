@@ -173,15 +173,55 @@ class ResolveMergedInputsNode(CodeNode):
         else:
             report_status = "not ready: " + error_text(validate_report)
 
-        previous_objective = "(none)"
-        for candidate in (
-            section("report_output").get("research_objective"),
-            section("quote_selector_prepare").get("objective"),
-            section("open_coder_prepare").get("objective"),
-        ):
-            if has_content(candidate) and candidate != "(not provided)":
-                previous_objective = candidate
-                break
+        def clean_objective(value):
+            if has_content(value) and value != "(not provided)":
+                return value
+            return None
+
+        report_objective = clean_objective(
+            section("report_output").get("research_objective")
+        ) or clean_objective(section("quote_selector_prepare").get("objective"))
+        codebook_objective = clean_objective(
+            section("open_coder_prepare").get("objective")
+        )
+
+        # node_results persists across the whole conversation thread, so both
+        # candidates above can be simultaneously present long after either
+        # pipeline last ran. Only one pipeline runs per turn, so we detect
+        # which candidate just changed relative to our own previous output
+        # (self-referential, since node_results.resolve_inputs holds what this
+        # node returned last time) and prefer that one as the more recent
+        # objective, instead of always favouring the report stage.
+        own_previous = section("resolve_inputs")
+        report_is_fresh = report_objective is not None and report_objective != (
+            own_previous.get("_report_objective_seen")
+        )
+        codebook_is_fresh = codebook_objective is not None and codebook_objective != (
+            own_previous.get("_codebook_objective_seen")
+        )
+        previous_source = own_previous.get("_previous_objective_source")
+
+        if report_is_fresh and not codebook_is_fresh:
+            objective_source = "report"
+        elif codebook_is_fresh and not report_is_fresh:
+            objective_source = "codebook"
+        elif previous_source in ("report", "codebook"):
+            objective_source = previous_source
+        elif report_objective is not None:
+            objective_source = "report"
+        elif codebook_objective is not None:
+            objective_source = "codebook"
+        else:
+            objective_source = None
+
+        if objective_source == "codebook" and codebook_objective is not None:
+            previous_objective = codebook_objective
+        elif report_objective is not None:
+            previous_objective = report_objective
+        elif codebook_objective is not None:
+            previous_objective = codebook_objective
+        else:
+            previous_objective = "(none)"
 
         return {
             "draft_codebook": draft_codebook,
@@ -204,6 +244,9 @@ class ResolveMergedInputsNode(CodeNode):
                 has_content(report_units) and has_content(report_assignments)
             ),
             "previous_objective": previous_objective,
+            "_report_objective_seen": report_objective,
+            "_codebook_objective_seen": codebook_objective,
+            "_previous_objective_source": objective_source,
         }
 
 
