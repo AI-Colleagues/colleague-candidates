@@ -61,8 +61,8 @@ Example frontmatter:
 
 ```python
 # /// orcheo
-# name = "Insight Analyst"
-# handle = "insight-analyst"
+# name = "Theme Analyst"
+# handle = "theme-analyst"
 # description = "Analyzes research inputs and produces concise insight summaries."
 # version = "1.3.0"
 #

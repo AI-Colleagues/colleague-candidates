@@ -11,6 +11,7 @@
 from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, StateGraph
+from pydantic import Field
 from orcheo.edges import Condition, IfElseEdge, SwitchCase, SwitchEdge
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
@@ -24,7 +25,6 @@ from orcheo.nodes.conversational_search.ingestion import (
 )
 from orcheo.nodes.conversational_search.retrieval import DenseSearchNode
 from orcheo.nodes.conversational_search.vector_store import InMemoryVectorStore
-from pydantic import Field
 
 
 class EntryRoutingNode(TaskNode):

@@ -1,0 +1,3 @@
+[submodule "colleague-experts"]
+	path = colleague-experts
+	url = git@github.com:AI-Colleagues/colleague-experts.git

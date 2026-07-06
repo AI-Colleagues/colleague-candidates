@@ -70,7 +70,7 @@ async def orcheo_workflow() -> StateGraph:
         MessageDiscordNode(
             name="send_discord",
             token="[[discord_bot_token]]",
-            channel_id="{{results.discord_listener.reply_target.channel_id}}",
+            channel_id="{{node_results.discord_listener.reply_target.channel_id}}",
         ),
     )
 

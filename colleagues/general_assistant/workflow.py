@@ -9,7 +9,7 @@
 # subtitle = "AI Assistant"
 # ///
 
-from langgraph.graph import StateGraph
+from orcheo.graph import StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode
 

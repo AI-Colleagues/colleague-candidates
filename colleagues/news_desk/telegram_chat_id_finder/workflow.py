@@ -24,118 +24,25 @@ Orcheo vault secrets required:
 - telegram_token: Telegram bot token
 """
 
-from typing import Any
-import httpx
-from langchain_core.runnables import RunnableConfig
-from langgraph.graph import END, START, StateGraph
+from orcheo.graph import END, START, StateGraph
 from orcheo.graph.state import State
-from orcheo.nodes.base import TaskNode
+from orcheo.nodes import CodeNode, HttpRequestNode
+from orcheo.nodes.logic import SetVariableNode
 
 
-class GetTelegramChatIdNode(TaskNode):
-    """Fetch Telegram updates and reply with the latest matching chat ID.
+class FormatTelegramChatIdNode(CodeNode):
+    """Format the latest matching Telegram chat from the getUpdates response."""
 
-    The ``token`` field defaults to the ``[[telegram_token]]`` vault
-    placeholder, which Orcheo resolves to the real bot token before ``run``
-    executes. The resolved token is used to build the ``getUpdates`` URL.
-
-    The reply is returned as ``assistant_message`` so ChatKit renders it as the
-    bot's chat response, regardless of what message the user sent.
-    """
-
-    token: str = "[[telegram_token]]"
     chat_type: str = "private"
-    timeout: float = 30.0
 
-    @staticmethod
-    def extract_chat(update: dict[str, Any]) -> dict[str, Any] | None:
-        """Return the chat object from any message-bearing update field."""
-        for key in (
-            "message",
-            "edited_message",
-            "channel_post",
-            "edited_channel_post",
-            "my_chat_member",
-            "chat_member",
-        ):
-            payload = update.get(key)
-            if isinstance(payload, dict):
-                chat = payload.get("chat")
-                if isinstance(chat, dict):
-                    return chat
-        return None
-
-    @staticmethod
-    def format_chat_name(chat: dict[str, Any]) -> str | None:
-        """Build a human-readable name for the chat, if any field is present."""
-        title = chat.get("title")
-        if isinstance(title, str) and title.strip():
-            return title.strip()
-
-        first = chat.get("first_name")
-        last = chat.get("last_name")
-        name_parts = [
-            part.strip()
-            for part in (first, last)
-            if isinstance(part, str) and part.strip()
-        ]
-        if name_parts:
-            return " ".join(name_parts)
-
-        username = chat.get("username")
-        if isinstance(username, str) and username.strip():
-            return f"@{username.strip()}"
-
-        return None
-
-    def _found_message(self, chat: dict[str, Any]) -> str:
-        """Render the templated reply for a discovered chat."""
-        lines = [
-            "✅ Found your Telegram chat ID!",
-            "",
-            f"🆔 Chat ID: `{chat.get('id')}`",
-            f"💬 Type: {chat.get('type')}",
-        ]
-
-        name = self.format_chat_name(chat)
-        if name is not None:
-            lines.append(f"👤 Name: {name}")
-
-        username = chat.get("username")
-        if isinstance(username, str) and username.strip():
-            lines.append(f"🔗 Username: @{username.strip()}")
-
-        lines += [
-            "",
-            "Use this value as `telegram_chat_id` in the Telegram Paperboy colleague.",
-        ]
-        return "\n".join(lines)
-
-    def _not_found_message(self) -> str:
-        """Render the templated reply when no matching chat is found."""
-        return (
-            f"🔍 I couldn't find a recent {self.chat_type} chat for your bot.\n\n"
-            "Please message your bot directly first, then send me any message "
-            "here and I'll look again."
-        )
-
-    async def run(self, state: State, config: RunnableConfig) -> dict[str, Any]:
-        """Call getUpdates and reply with the latest chat ID of the wanted type."""
-        del state, config
-        url = f"https://api.telegram.org/bot{self.token}/getUpdates"
-
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, timeout=self.timeout)
-                response.raise_for_status()
-        except httpx.HTTPError as exc:
-            msg = f"Telegram getUpdates request failed: {exc!s}"
-            raise ValueError(msg) from exc
-
-        payload = response.json()
+    async def run(self, state, config):  # noqa: C901, PLR0912
+        """Return the ChatKit reply and result metadata for the latest chat."""
+        http_result = state.get("node_results", {}).get("fetch_updates", {})
+        payload = http_result.get("json") if isinstance(http_result, dict) else {}
+        if not isinstance(payload, dict):
+            payload = {}
         if not payload.get("ok"):
-            msg = f"Telegram API returned an error: {payload}"
-            raise ValueError(msg)
+            raise ValueError("Telegram API returned an error: " + str(payload))
 
         updates = payload.get("result", [])
         if not isinstance(updates, list):
@@ -143,23 +50,86 @@ class GetTelegramChatIdNode(TaskNode):
 
         # Updates are ordered oldest-first, so scan from the end to find the
         # most recent chat of the requested type.
+        chat = None
         for update in reversed(updates):
             if not isinstance(update, dict):
                 continue
-            chat = self.extract_chat(update)
+            for key in (
+                "message",
+                "edited_message",
+                "channel_post",
+                "edited_channel_post",
+                "my_chat_member",
+                "chat_member",
+            ):
+                update_payload = update.get(key)
+                if isinstance(update_payload, dict):
+                    candidate = update_payload.get("chat")
+                    if isinstance(candidate, dict):
+                        chat = candidate
+                        break
             if chat is not None and chat.get("type") == self.chat_type:
-                return {
-                    "assistant_message": self._found_message(chat),
-                    "chat_id": chat.get("id"),
-                    "chat_type": chat.get("type"),
-                    "username": chat.get("username"),
-                    "first_name": chat.get("first_name"),
-                    "title": chat.get("title"),
-                    "update_count": len(updates),
-                }
+                break
+            chat = None
 
+        if chat is not None:
+            lines = [
+                "✅ Found your Telegram chat ID!",
+                "",
+                "🆔 Chat ID: `" + str(chat.get("id")) + "`",
+                "💬 Type: " + str(chat.get("type")),
+            ]
+
+            name = None
+            title = chat.get("title")
+            if isinstance(title, str) and title.strip():
+                name = title.strip()
+
+            first = chat.get("first_name")
+            last = chat.get("last_name")
+            name_parts = []
+            if isinstance(first, str) and first.strip():
+                name_parts.append(first.strip())
+            if isinstance(last, str) and last.strip():
+                name_parts.append(last.strip())
+            if name is None and name_parts:
+                name = " ".join(name_parts)
+
+            username = chat.get("username")
+            if name is None and isinstance(username, str) and username.strip():
+                name = "@" + username.strip()
+
+            if name is not None:
+                lines.append("👤 Name: " + name)
+
+            if isinstance(username, str) and username.strip():
+                lines.append("🔗 Username: @" + username.strip())
+
+            paperboy_line = (
+                "Use this value as `telegram_chat_id` in the Telegram Paperboy "
+                "colleague."
+            )
+            lines += ["", paperboy_line]
+            assistant_message = "\n".join(lines)
+            return {
+                "assistant_message": assistant_message,
+                "chat_id": chat.get("id"),
+                "chat_type": chat.get("type"),
+                "username": chat.get("username"),
+                "first_name": chat.get("first_name"),
+                "title": chat.get("title"),
+                "update_count": len(updates),
+            }
+
+        assistant_message = (
+            "🔍 I couldn't find a recent "
+            + str(self.chat_type)
+            + " chat for your bot.\n\n"
+            + "Please message your bot directly first, then send me any message "
+            + "here and I'll look again."
+        )
         return {
-            "assistant_message": self._not_found_message(),
+            "assistant_message": assistant_message,
             "chat_id": None,
             "chat_type": self.chat_type,
             "update_count": len(updates),
@@ -175,14 +145,36 @@ async def orcheo_workflow() -> StateGraph:
     graph = StateGraph(State)
 
     graph.add_node(
+        "load_telegram_token",
+        SetVariableNode(
+            name="load_telegram_token",
+            variables={"telegram_token": "[[telegram_token]]"},
+        ),
+    )
+    graph.add_node(
+        "fetch_updates",
+        HttpRequestNode(
+            name="fetch_updates",
+            method="GET",
+            url=(
+                "https://api.telegram.org/bot"
+                "{{node_results.load_telegram_token.telegram_token}}/getUpdates"
+            ),
+            timeout=30.0,
+            raise_for_status=True,
+        ),
+    )
+    graph.add_node(
         "get_chat_id",
-        GetTelegramChatIdNode(
+        FormatTelegramChatIdNode(
             name="get_chat_id",
             chat_type="{{config.configurable.chat_type}}",
         ),
     )
 
-    graph.add_edge(START, "get_chat_id")
+    graph.add_edge(START, "load_telegram_token")
+    graph.add_edge("load_telegram_token", "fetch_updates")
+    graph.add_edge("fetch_updates", "get_chat_id")
     graph.add_edge("get_chat_id", END)
 
     return graph

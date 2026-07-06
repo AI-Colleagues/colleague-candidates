@@ -1,4 +1,4 @@
-# Insight Analyst happy-path test data
+# Theme Analyst happy-path test data
 
 Use these files to exercise the workflow manually:
 

@@ -3,7 +3,10 @@ dev = [
   "isort",
   "mypy>=1.11.2",
   "pre-commit",
-  "ruff>=0.11.3",
+  "pytest>=8.3.3",
+  "pytest-asyncio>=0.24.0",
+  "pytest-cov>=5.0.0",
+  "ruff==0.14.9",
   "types-requests"
 ]
 
@@ -17,6 +20,24 @@ readme = "README.md"
 requires-python = ">=3.12"
 url = "https://github.com/AI-Colleagues/colleague-candidates"
 version = "0.0.1"
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:"
+]
+
+[tool.coverage.run]
+branch = true
+source = ["colleagues"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+filterwarnings = [
+  "ignore:.*named widget classes is deprecated.*:DeprecationWarning"
+]
+pythonpath = ["."]
+testpaths = ["tests"]
 
 [tool.ruff]
 exclude = ["docs", "build", "examples"]
@@ -61,7 +82,7 @@ no-lines-before = ["future", "standard-library", "third-party", "first-party", "
 max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D"]
+"tests/**" = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

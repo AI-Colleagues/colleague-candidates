@@ -65,7 +65,7 @@ async def orcheo_workflow() -> StateGraph:
         MessageTelegramNode(
             name="send_telegram",
             token="[[telegram_token]]",
-            chat_id="{{results.telegram_listener.reply_target.chat_id}}",
+            chat_id="{{node_results.telegram_listener.reply_target.chat_id}}",
         ),
     )
 

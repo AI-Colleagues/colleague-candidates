@@ -36,6 +36,7 @@ Configurable inputs (config.json):
 from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, StateGraph
+from pydantic import Field
 from orcheo.graph.state import State
 from orcheo.nodes.base import TaskNode
 from orcheo.nodes.conversational_search.generation import (
@@ -51,7 +52,6 @@ from orcheo.nodes.conversational_search.retrieval import (
     WebSearchNode,
 )
 from orcheo.nodes.conversational_search.vector_store import PineconeVectorStore
-from pydantic import Field
 
 
 def default_retriever_map() -> dict[str, str]:

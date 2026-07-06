@@ -29,9 +29,9 @@
 # ///
 
 from langgraph.graph import END, START, StateGraph
+from orcheo_plugin_wechat_listener import WechatListenerPluginNode, WechatReplyNode
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode, AgentReplyExtractorNode
-from orcheo_plugin_wechat_listener import WechatListenerPluginNode, WechatReplyNode
 
 
 async def orcheo_workflow() -> StateGraph:
@@ -69,9 +69,9 @@ async def orcheo_workflow() -> StateGraph:
             account_id="[[wechat_account_id]]",
             bot_token="[[wechat_bot_token]]",
             base_url="[[wechat_base_url]]",
-            message="{{results.extract_reply.agent_reply}}",
-            reply_target="{{results.wechat_listener.reply_target}}",
-            raw_event="{{results.wechat_listener.raw_event}}",
+            message="{{node_results.extract_reply.agent_reply}}",
+            reply_target="{{node_results.wechat_listener.reply_target}}",
+            raw_event="{{node_results.wechat_listener.raw_event}}",
         ),
     )
 

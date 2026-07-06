@@ -10,7 +10,7 @@
 # notes = "Seeded from Knowledge Guide template."
 # ///
 
-from langgraph.graph import END, START, StateGraph
+from orcheo.graph import END, START, StateGraph
 from orcheo.graph.state import State
 from orcheo.nodes.ai import AgentNode
 from orcheo.nodes.rag import (
@@ -19,7 +19,7 @@ from orcheo.nodes.rag import (
     TextEmbeddingNode,
 )
 from orcheo.nodes.storage.mongodb import MongoDBHybridSearchNode
-from pydantic import BaseModel, Field
+from orcheo.schema import BaseModel, Field
 
 
 class HybridSearchInput(BaseModel):
@@ -104,7 +104,7 @@ async def orcheo_workflow() -> StateGraph:
                 "description": "Hybrid search over MongoDB Atlas data.",
                 "graph": build_hybrid_search_tool_graph(),
                 "args_schema": HybridSearchInput,
-                "output_path": "results.format_results.markdown",
+                "output_path": "node_results.format_results.markdown",
             }
         ],
     )

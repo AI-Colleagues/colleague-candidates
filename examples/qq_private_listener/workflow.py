@@ -67,11 +67,11 @@ async def orcheo_workflow() -> StateGraph:
             name="send_qq",
             app_id="[[qq_app_id]]",
             client_secret="[[qq_client_secret]]",
-            openid="{{results.qq_listener.reply_target.openid}}",
-            group_openid="{{results.qq_listener.reply_target.group_openid}}",
-            channel_id="{{results.qq_listener.reply_target.channel_id}}",
-            guild_id="{{results.qq_listener.reply_target.guild_id}}",
-            msg_id="{{results.qq_listener.reply_target.msg_id}}",
+            openid="{{node_results.qq_listener.reply_target.openid}}",
+            group_openid="{{node_results.qq_listener.reply_target.group_openid}}",
+            channel_id="{{node_results.qq_listener.reply_target.channel_id}}",
+            guild_id="{{node_results.qq_listener.reply_target.guild_id}}",
+            msg_id="{{node_results.qq_listener.reply_target.msg_id}}",
         ),
     )
 
