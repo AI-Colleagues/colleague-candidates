@@ -1,0 +1,78 @@
+{
+  "configurable": {
+    "cron_expression": {
+      "type": "string",
+      "title": "Schedule",
+      "description": "Cron schedule for producing the radar report (Europe/Amsterdam).",
+      "format": "cron",
+      "default": "0 8 * * 1"
+    },
+    "rss_database": {
+      "type": "string",
+      "title": "RSS Database",
+      "description": "MongoDB database holding the curated RSS news corpus.",
+      "default": "Orcheo"
+    },
+    "rss_collection": {
+      "type": "string",
+      "title": "RSS Collection",
+      "description": "MongoDB collection that stores the RSS feed entries.",
+      "default": "rss_feeds"
+    },
+    "max_items": {
+      "type": "integer",
+      "title": "Max Items Per Run",
+      "description": "Maximum number of unread news items processed per run (cost/latency cap).",
+      "default": 50
+    },
+    "ai_model": {
+      "type": "string",
+      "enum": [
+        "openai:gpt-4.1-mini",
+        "openai:gpt-5.4-mini"
+      ],
+      "title": "Model",
+      "description": "The AI model used for theme finding and recoding.",
+      "default": "openai:gpt-5.4-mini"
+    },
+    "batch_size": {
+      "type": "integer",
+      "title": "Batch Size",
+      "description": "Number of coding units sent to the model per batch.",
+      "default": 25
+    },
+    "quotes_per_theme": {
+      "type": "integer",
+      "title": "Quotes Per Theme",
+      "description": "Number of representative quotes surfaced per theme in the report.",
+      "default": 3
+    },
+    "research_objective": {
+      "type": "string",
+      "format": "textarea",
+      "title": "Research Objective",
+      "description": "Framing objective used for theme finding and report synthesis.",
+      "default": "Track what the AI/tech field is paying attention to — foundation models, AI agents, and agentic orchestration — and surface prominent themes plus emerging off-radar candidates worth investigating."
+    },
+    "seed_codebook": {
+      "type": "string",
+      "format": "textarea",
+      "title": "Seed Codebook",
+      "description": "Curated codebook merged into the discovered themes; themes present here are reported as Covered, newly discovered themes as Emergent candidates. Provide the codebook as JSON text (a {\"themes\": [...]} object).",
+      "default": "{\n  \"themes\": [\n    {\n      \"theme_id\": \"T01\",\n      \"title\": \"Foundation models & LLM releases\",\n      \"subthemes\": [\n        {\n          \"code_id\": \"C001\",\n          \"title\": \"model releases and benchmarks\",\n          \"definition\": \"New foundation/frontier model launches, version upgrades, capability claims, and benchmark or evaluation results.\",\n          \"include\": [\n            \"new LLM release\",\n            \"benchmark results\",\n            \"capability comparisons\"\n          ],\n          \"exclude\": [\n            \"agent products built on top of models\"\n          ]\n        },\n        {\n          \"code_id\": \"C002\",\n          \"title\": \"open-weight and local models\",\n          \"definition\": \"Open-weight model releases, local/on-device inference, quantization, and the open vs closed model debate.\",\n          \"include\": [\n            \"open-weight release\",\n            \"local inference\",\n            \"model licensing\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C003\",\n          \"title\": \"multimodal and generative media\",\n          \"definition\": \"Image, video, audio, and speech generation or understanding models and products.\",\n          \"include\": [\n            \"video generation\",\n            \"speech models\",\n            \"image models\"\n          ],\n          \"exclude\": []\n        }\n      ]\n    },\n    {\n      \"theme_id\": \"T02\",\n      \"title\": \"AI agents & autonomy\",\n      \"subthemes\": [\n        {\n          \"code_id\": \"C004\",\n          \"title\": \"agent frameworks and platforms\",\n          \"definition\": \"Frameworks, SDKs, and platforms for building autonomous or semi-autonomous AI agents.\",\n          \"include\": [\n            \"agent SDK\",\n            \"multi-agent systems\",\n            \"agent platforms\"\n          ],\n          \"exclude\": [\n            \"single-shot chat assistants\"\n          ]\n        },\n        {\n          \"code_id\": \"C005\",\n          \"title\": \"coding agents and developer tools\",\n          \"definition\": \"AI coding assistants and autonomous software-engineering agents, and their impact on developer workflows.\",\n          \"include\": [\n            \"coding agent\",\n            \"AI pair programming\",\n            \"autonomous PRs\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C006\",\n          \"title\": \"computer-use and browser agents\",\n          \"definition\": \"Agents that operate GUIs, browsers, or operating systems to complete tasks on behalf of users.\",\n          \"include\": [\n            \"computer use\",\n            \"browser automation agents\"\n          ],\n          \"exclude\": []\n        }\n      ]\n    },\n    {\n      \"theme_id\": \"T03\",\n      \"title\": \"Agentic orchestration & infrastructure\",\n      \"subthemes\": [\n        {\n          \"code_id\": \"C007\",\n          \"title\": \"workflow orchestration\",\n          \"definition\": \"Orchestrating multi-step agent workflows: graphs, pipelines, scheduling, state management, and durable execution.\",\n          \"include\": [\n            \"workflow engines\",\n            \"agent orchestration\",\n            \"pipeline tooling\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C008\",\n          \"title\": \"tool protocols and interoperability\",\n          \"definition\": \"Protocols and standards connecting models to tools and data, such as MCP and function calling conventions.\",\n          \"include\": [\n            \"MCP\",\n            \"tool calling standards\",\n            \"agent interoperability\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C009\",\n          \"title\": \"evaluation and observability\",\n          \"definition\": \"Testing, benchmarking, tracing, and monitoring of agents and LLM applications in development and production.\",\n          \"include\": [\n            \"agent evals\",\n            \"LLM observability\",\n            \"tracing\"\n          ],\n          \"exclude\": []\n        }\n      ]\n    },\n    {\n      \"theme_id\": \"T04\",\n      \"title\": \"AI safety, security & governance\",\n      \"subthemes\": [\n        {\n          \"code_id\": \"C010\",\n          \"title\": \"safety and alignment\",\n          \"definition\": \"Model alignment research, misuse risks, interpretability, and frontier-safety commitments.\",\n          \"include\": [\n            \"alignment research\",\n            \"interpretability\",\n            \"safety frameworks\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C011\",\n          \"title\": \"security and prompt injection\",\n          \"definition\": \"Attacks on or via AI systems: prompt injection, jailbreaks, data exfiltration, and defenses for agentic systems.\",\n          \"include\": [\n            \"prompt injection\",\n            \"jailbreaks\",\n            \"agent security\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C012\",\n          \"title\": \"regulation and policy\",\n          \"definition\": \"Government regulation, standards, litigation, and public-policy debates around AI.\",\n          \"include\": [\n            \"AI acts and bills\",\n            \"copyright litigation\",\n            \"export controls\"\n          ],\n          \"exclude\": []\n        }\n      ]\n    },\n    {\n      \"theme_id\": \"T05\",\n      \"title\": \"AI business & market moves\",\n      \"subthemes\": [\n        {\n          \"code_id\": \"C013\",\n          \"title\": \"funding and corporate moves\",\n          \"definition\": \"Funding rounds, M&A, partnerships, leadership changes, and strategic pivots of AI companies.\",\n          \"include\": [\n            \"funding rounds\",\n            \"acquisitions\",\n            \"strategic partnerships\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C014\",\n          \"title\": \"enterprise adoption and labor impact\",\n          \"definition\": \"Enterprise AI deployment stories, productivity claims, and effects on jobs and workflows.\",\n          \"include\": [\n            \"enterprise rollouts\",\n            \"workforce impact\",\n            \"ROI claims\"\n          ],\n          \"exclude\": []\n        },\n        {\n          \"code_id\": \"C015\",\n          \"title\": \"compute and hardware\",\n          \"definition\": \"Chips, datacenters, energy, and infrastructure buildout for AI training and inference.\",\n          \"include\": [\n            \"GPU supply\",\n            \"datacenter buildout\",\n            \"inference costs\"\n          ],\n          \"exclude\": []\n        }\n      ]\n    }\n  ]\n}"
+    },
+    "telegram_chat_id": {
+      "type": "string",
+      "title": "Telegram Chat ID",
+      "description": "Telegram chat that receives the radar report file.",
+      "default": "[[telegram_chat_id]]"
+    },
+    "dry_run": {
+      "type": "boolean",
+      "title": "Dry Run",
+      "description": "When true, the report is produced and sent but processed items are NOT marked read (useful while iterating).",
+      "default": false
+    }
+  },
+  "recursion_limit": 250
+}
