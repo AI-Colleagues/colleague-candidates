@@ -86,6 +86,3 @@ max-complexity = 10
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-
-[tool.uv.sources]
-orcheo = {git = "https://github.com/AI-Colleagues/orcheo.git", branch = "refactor/internalise-nodes"}
