@@ -129,6 +129,12 @@ class TestResolveMergedInputsNode:
         assert result["report_chained_ready"] is False
         assert result["has_draft_codebook"] is False
         assert result["has_recoded_data"] is False
+        assert result["codebook_gen_status"] == (
+            "not ready: no valid files were uploaded in this conversation"
+        )
+        assert result["recode_status"].startswith("not ready:")
+        assert result["report_status"].startswith("not ready:")
+        assert result["previous_objective"] == "(none)"
 
     async def test_non_dict_node_results_is_tolerated(self) -> None:
         """A missing or non-dict ``node_results`` value falls back to empty."""
@@ -218,6 +224,9 @@ class TestResolveMergedInputsNode:
         assert result["report_chained_ready"] is False
         assert result["report_ready"] is True
         assert result["report_source_payload"] == "coded-data"
+        assert result["report_status"] == (
+            "ready: the uploaded coded-data file will be used"
+        )
 
     async def test_report_prefers_freshly_chained_results_over_stale_upload(
         self,
@@ -247,6 +256,9 @@ class TestResolveMergedInputsNode:
         assert result["has_recoded_data"] is True
         # Chained results are used directly; no upload fallback is populated.
         assert result["report_source_payload"] is None
+        assert result["report_status"] == (
+            "ready: recoded results produced in this conversation will be used"
+        )
 
     async def test_report_codebook_prefers_directly_validated_codebook(self) -> None:
         """A codebook validated directly for reporting skips both fallbacks."""
@@ -290,3 +302,39 @@ class TestResolveMergedInputsNode:
         assert result["report_chained_ready"] is False
         assert result["report_uploaded_ready"] is False
         assert result["report_source_payload"] == "recode-data"
+
+    async def test_status_lines_surface_validation_errors(self) -> None:
+        """Not-ready statuses relay the validator error strings."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "validate_report_files": {
+                        "ok": False,
+                        "errors": ["No valid data file found.", "bad.csv: unreadable"],
+                    },
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["report_status"] == (
+            "not ready: No valid data file found.; bad.csv: unreadable"
+        )
+
+    async def test_previous_objective_prefers_report_then_prepare_nodes(self) -> None:
+        """The previous objective is recovered from earlier pipeline runs."""
+        node = workflow.ResolveMergedInputsNode(name="resolve_inputs")
+        state = State(
+            {
+                "node_results": {
+                    "open_coder_prepare": {"objective": "understand churn"},
+                    "quote_selector_prepare": {"objective": "(not provided)"},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert result["previous_objective"] == "understand churn"
