@@ -19,6 +19,9 @@ delivered items as read. Two entry points share the same digest flow:
 - On demand: a managed Telegram bot listener replies to whoever messages
   the bot with the next batch of unread news.
 
+TODO: Replace the fixed unread-item cap with a configurable ``batch_size``
+once the news digest flow supports batched delivery.
+
 Configurable inputs (config.json):
 - cron_expression (cron schedule, Europe/Amsterdam timezone)
 - rss_database (MongoDB database name)
@@ -160,6 +163,8 @@ async def orcheo_workflow() -> StateGraph:
             collection="{{config.configurable.rss_collection}}",
             filter={"read": False},
             sort={"isoDate": -1},
+            # TODO: Thread batch_size through here once the digest flow can
+            # accept a configurable unread-item cap.
             limit=20,
         ),
     )

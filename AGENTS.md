@@ -1,12 +1,18 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-This repository stores Orcheo colleague workflows, one per directory under `colleagues/`. Each colleague typically contains:
+This repository stores Orcheo colleague workflows under `colleagues/`, grouped by desk (e.g. `colleagues/news_desk/market_radar_analyst/`, `colleagues/knowledge_desk/index_steward/`); a few standalone colleagues live directly under `colleagues/<colleague>/`. Each colleague directory contains:
 
 - `workflow.py` for the workflow definition and `# /// orcheo` frontmatter.
 - `config.json` for optional runnable configuration.
 
-Supporting planning and design notes live under `docs/`, with reusable templates in `docs/templates/`. Keep new colleagues in `colleagues/<handle>/` using snake_case directory names that match the workflow handle, while the handle itself should be in kebab-case.
+Supporting planning and design notes live under `project/`, with reusable templates in `project/templates/`. Keep new colleagues in `colleagues/<desk>/<colleague>/` using snake_case directory names that match the workflow handle, while the handle itself should be in kebab-case.
+
+Other top-level areas:
+
+- `colleague-experts/` — git submodule hosting expert colleagues and skills in their own repository (with its own `AGENTS.md`).
+- `examples/` — standalone example workflows; excluded from linting and coverage.
+- `tests/` — pytest suite mirroring the `colleagues/` layout.
 
 ### Self-contained workflows
 Each `workflow.py` is intentionally self-contained. Code duplication across workflows (helpers, node subclasses, utility functions) is acceptable and expected — do not extract shared code into a common module. This keeps each workflow independently deployable and readable without cross-file dependencies.
@@ -16,10 +22,11 @@ This project uses `uv`-managed Python 3.12 dependencies.
 
 - `make lint` runs `ruff check .` and `ruff format . --check`.
 - `make format` applies `ruff format .` and fixes import/order issues.
+- `make test` runs `pytest` with branch coverage over `colleagues/` and fails below 100% coverage.
 - `uv sync` installs the locked dependencies from `uv.lock`.
 - `uv run ruff check .` is a direct alternative to the Make target.
 
-There is no dedicated automated test suite in the repository yet, so linting is the primary validation step.
+Run both `make lint` and `make test` before handoff.
 
 ## Coding Style & Naming Conventions
 Follow the existing Python conventions enforced by `pyproject.toml`:
@@ -30,7 +37,7 @@ Follow the existing Python conventions enforced by `pyproject.toml`:
 - Use type annotations on public functions; `ruff` is the sole linting tool.
 - Use snake_case for Python modules and functions.
 
-Workflow metadata should stay consistent with the frontmatter keys used in existing files: `name`, `handle`, `description`, `entrypoint`, and optional `avatar`, `subtitle`, and `config`.
+Workflow metadata should stay consistent with the frontmatter keys used in existing files: `name`, `handle`, `description`, `version`, `entrypoint`, and optional `avatar`, `subtitle`, `config`, and `[[updates]]` entries (see the Colleague Update Procedure below).
 
 ## Colleague Update Procedure
 When updating an existing colleague workflow, treat the change as a released
@@ -54,8 +61,8 @@ release notes in Orcheo Studio.
 - Keep `updates` focused on user-visible changes since each entry is shown in
   the Studio update flow. Do not use it for internal refactors that do not affect
   operators or downstream workflows.
-- Run `make lint` before handoff. If the workflow has a local runnable config or
-  targeted test coverage, run the relevant `uv run` validation as well.
+- Run `make lint` and `make test` before handoff. If the workflow has a local
+  runnable config, run the relevant `uv run` validation as well.
 
 Example frontmatter:
 
@@ -74,7 +81,7 @@ Example frontmatter:
 ```
 
 ## Testing Guidelines
-No `tests/` directory exists today. If you add tests, place them under `tests/` and use `test_*.py` naming. Prefer focused checks around workflow assembly, config parsing, and any helper logic.
+Tests live under `tests/`, mirroring the `colleagues/` layout (e.g. `tests/colleagues/news_desk/test_feed_curator.py`). Use `test_*.py` naming; `pytest-asyncio` runs in auto mode, so async tests need no marker. `make test` enforces 100% branch coverage over `colleagues/` — add or update tests alongside every workflow change. Prefer focused checks around workflow assembly, config parsing, and any helper logic.
 
 ## Commit & Pull Request Guidelines
 Recent commits use short imperative summaries such as `Update orcheo version` and `Restructure templates into colleagues/ and add PEP 723 frontmatter`. Keep commits narrow and descriptive.

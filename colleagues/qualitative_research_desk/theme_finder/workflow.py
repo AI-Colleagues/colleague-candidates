@@ -45,6 +45,13 @@ class RoutingDecision(BaseModel):
             "to generate_codebook."
         ),
     )
+    export_format: Literal["csv", "json"] = Field(  # noqa: F821
+        default="csv",
+        description=(
+            "Export format when branch is export_codebook. Only set to json when "
+            "the user explicitly asks for JSON; otherwise keep the csv default."
+        ),
+    )
 
 
 async def orcheo_workflow() -> StateGraph:
@@ -242,7 +249,8 @@ async def orcheo_workflow() -> StateGraph:
                 "a draft codebook. Requires valid uploaded data and an available "
                 "research objective.\n"
                 "- `export_codebook` - convert the current draft codebook into a "
-                "downloadable CSV. Route here when the user approves the codebook.\n"
+                "downloadable CSV, or into inline JSON text. Route here when the "
+                "user approves the codebook.\n"
                 "- `respond` - reply to the user directly in "
                 "`assistant_message` instead of running a pipeline.\n\n"
                 "Rules:\n"
@@ -255,6 +263,10 @@ async def orcheo_workflow() -> StateGraph:
                 "- When routing to `generate_codebook`, extract the user's research "
                 "objective into `research_objective`. If reusing the previous "
                 "objective, return that exact objective. Do not invent one.\n"
+                "- When routing to `export_codebook`, set `export_format` to "
+                "`json` only if the user explicitly asks for JSON (e.g. 'as "
+                "JSON', 'JSON text', 'give me the JSON'). Otherwise leave it as "
+                "the default `csv`.\n"
                 "- Only route to a pipeline branch when the user's intent is "
                 "clear. Keep direct replies short and action-oriented.\n\n"
                 "When validation fails, the correct shape is:\n"
@@ -298,6 +310,7 @@ async def orcheo_workflow() -> StateGraph:
             codebook="{{node_results.codebook_consolidator_finalize.draft_codebook}}",
             export_filename="codebook.csv",
             export_mime_type="text/csv",
+            export_format="{{structured_response.export_format}}",
         ),
     )
     graph.add_node(
