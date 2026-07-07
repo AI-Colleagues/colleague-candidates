@@ -2,25 +2,11 @@
 # name = "Market Radar Analyst"
 # handle = "market-radar-analyst"
 # description = "Turn unread curated news into a two-track theme radar report."
-# version = "0.4.0"
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-09"
 # subtitle = "Scheduled market radar"
-#
-# [[updates]]
-# version = "0.4.0"
-# summary = "seed_codebook is now edited as JSON text instead of a JSON object field."
-# migration = "Re-enter a custom seed_codebook as JSON text; the default is unchanged."
-#
-# [[updates]]
-# version = "0.3.0"
-# summary = "Process the newest unread articles first instead of the oldest."
-# migration = "Raise max_items if unread inflow now outpaces it, or backlog stalls."
-#
-# [[updates]]
-# version = "0.2.0"
-# summary = "Deliver the report as styled HTML; Telegram shows .md as plain text."
 # ///
 
 """News Desk - Market Radar Analyst workflow.
@@ -46,6 +32,7 @@ starts a run.
 Configurable inputs (config.json):
 - cron_expression, rss_database, rss_collection, max_items
 - ai_model, batch_size, quotes_per_theme, research_objective
+  (batch_size is reserved for future batch-aware prepare-node wiring)
 - seed_codebook (curated themes reported as Covered)
 - telegram_chat_id, dry_run (skip mark-read while iterating)
 
@@ -141,6 +128,8 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             ),
         ),
     )
+    # TODO: Thread batch_size into this stage once Orcheo exposes a stable
+    # batch-aware prepare node for qualitative coding.
     graph.add_node(
         "open_coder",
         LLMNode(
@@ -231,6 +220,8 @@ async def orcheo_workflow() -> StateGraph:  # noqa: PLR0915
             ),
         ),
     )
+    # TODO: Apply batch_size here as well when the shared batch-aware prepare
+    # helper lands in Orcheo.
     graph.add_node(
         "recoder",
         LLMNode(

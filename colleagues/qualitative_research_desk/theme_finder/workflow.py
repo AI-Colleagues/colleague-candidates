@@ -2,15 +2,11 @@
 # name = "Theme Finder"
 # handle = "theme-finder"
 # description = "Ingest qualitative data and produce a themed codebook."
-# version = "0.2.0"
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-04"
 # subtitle = "Codebook generation"
-#
-# [[updates]]
-# version = "0.2.0"
-# summary = "Export the codebook as inline JSON text on request, in addition to CSV."
 # ///
 
 """Theme Finder: ingest data and produce a draft codebook."""

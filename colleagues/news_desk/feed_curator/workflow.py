@@ -17,6 +17,9 @@ and inserts them into MongoDB.
 
 RSS source URLs are maintained in the companion ``config.json``
 and uploaded via ``--config-file config.json``.
+
+TODO: Batch the RSS fetch/store path later if feed volume grows enough to
+benefit from a configurable ``batch_size``.
 """
 
 from orcheo.graph import END, START, StateGraph

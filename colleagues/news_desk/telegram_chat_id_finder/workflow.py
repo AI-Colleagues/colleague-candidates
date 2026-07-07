@@ -17,6 +17,9 @@ message containing the most recent matching chat ID. Use it to discover the
 ``telegram_chat_id`` value needed by the Telegram Paperboy colleague:
 message your bot first, then send any message here to read the chat ID back.
 
+TODO: If this helper ever needs to page through a larger update history, wire
+in a batch_size-style cap before scanning the response.
+
 Configurable inputs (config.json):
 - chat_type (chat type to look for; defaults to "private")
 

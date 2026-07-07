@@ -2,15 +2,11 @@
 # name = "Theme Analyst"
 # handle = "theme-analyst"
 # description = "Generate codebooks, recode data, and synthesize theme reports."
-# version = "0.1.1"
+# version = "0.1.0"
 # entrypoint = "orcheo_workflow"
 # config = "./config.json"
 # avatar = "avatar-14"
 # subtitle = "End-to-end theme analysis"
-#
-# [[updates]]
-# version = "0.1.1"
-# summary = "Fix report routing after recoding via merged readiness statuses."
 # ///
 
 """Theme Analyst: generate codebooks, recode data, and render reports."""
