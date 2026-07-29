@@ -41,7 +41,11 @@ from orcheo.nodes.connectors.telegram import (
     TelegramBotListenerNode,
 )
 from orcheo.nodes.data import HtmlTextTransformNode
-from orcheo.nodes.storage.mongodb import MongoDBFindNode, MongoDBUpdateManyNode
+from orcheo.nodes.storage.mongodb import (
+    MongoDBFindNode,
+    MongoDBNode,
+    MongoDBUpdateManyNode,
+)
 from orcheo.nodes.triggers import CronTriggerNode
 
 
@@ -61,19 +65,35 @@ class DetectTriggerNode(CodeNode):
 class FormatDigestNode(CodeNode):
     """Format the latest unread RSS news items into a digest message."""
 
+    @staticmethod
+    def _extract_items(results: dict) -> list:
+        """Return the escaped RSS items list, tolerating malformed state."""
+        html_result = results.get("escape_titles", {})
+        if not isinstance(html_result, dict):
+            return []
+        data = html_result.get("result")
+        return data if isinstance(data, list) else []
+
+    @staticmethod
+    def _resolve_unread_count(results: dict, delivered_count: int) -> int:
+        """Return the unread count remaining once this batch is delivered."""
+        count_result = results.get("count_unread", {})
+        if not isinstance(count_result, dict):
+            return 0
+        count_data = count_result.get("data", {})
+        if not isinstance(count_data, dict):
+            return 0
+        total_unread = count_data.get("result")
+        if not isinstance(total_unread, int):
+            total_unread = delivered_count
+        return max(total_unread - delivered_count, 0)
+
     async def run(self, state, config):
         """Return the digest content string and the delivered item IDs."""
         results = state.get("node_results", {})
         if not isinstance(results, dict):
             results = {}
-        html_result = results.get("escape_titles", {})
-        if not isinstance(html_result, dict):
-            html_result = {}
-        data = html_result.get("result")
-        if isinstance(data, list):
-            items = data
-        else:
-            items = []
+        items = self._extract_items(results)
 
         lines = []
         ids = []
@@ -93,8 +113,15 @@ class FormatDigestNode(CodeNode):
                 lines.append("- " + str(title))
 
         content = "\n".join(lines) if lines else "No news updates today."
+        unread_count = self._resolve_unread_count(results, len(ids))
+
         return {
-            "content": "Today's RSS News:\n\n" + content,
+            "content": (
+                "Today's RSS News:\n\n"
+                + content
+                + "\n\nUnread count: "
+                + str(unread_count)
+            ),
             "ids": ids,
             "has_items": bool(ids),
         }
@@ -163,9 +190,22 @@ async def orcheo_workflow() -> StateGraph:
             collection="{{config.configurable.rss_collection}}",
             filter={"read": False},
             sort={"isoDate": -1},
+            projection=["_id", "title", "link"],
             # TODO: Thread batch_size through here once the digest flow can
             # accept a configurable unread-item cap.
             limit=20,
+        ),
+    )
+
+    # --- Count total unread items (before this batch is marked read) ---
+    graph.add_node(
+        "count_unread",
+        MongoDBNode(
+            name="count_unread",
+            operation="count_documents",
+            database="{{config.configurable.rss_database}}",
+            collection="{{config.configurable.rss_collection}}",
+            filter={"read": False},
         ),
     )
 
@@ -244,7 +284,8 @@ async def orcheo_workflow() -> StateGraph:
         },
     )
 
-    graph.add_edge("find_unread", "escape_titles")
+    graph.add_edge("find_unread", "count_unread")
+    graph.add_edge("count_unread", "escape_titles")
     graph.add_edge("escape_titles", "format_digest")
 
     # Only send (and mark read) when there are unread items to deliver.
