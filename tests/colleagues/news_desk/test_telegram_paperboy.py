@@ -58,7 +58,9 @@ class TestFormatDigestNode:
 
         result = await node.run(state, {})
 
-        assert result["content"] == "Today's RSS News:\n\nNo news updates today."
+        assert result["content"] == (
+            "Today's RSS News:\n\nNo news updates today.\n\nUnread count: 0"
+        )
         assert result["ids"] == []
         assert result["has_items"] is False
 
@@ -98,7 +100,8 @@ class TestFormatDigestNode:
                             {"_id": "a2", "link": ""},
                             {"title": "No Id Here"},
                         ]
-                    }
+                    },
+                    "count_unread": {"data": {"result": 5}},
                 }
             }
         )
@@ -110,6 +113,66 @@ class TestFormatDigestNode:
         assert '<a href="https://x">Has A Link</a>' in result["content"]
         assert "- No Title" in result["content"]
         assert "- No Id Here" in result["content"]
+        assert "Unread count: 3" in result["content"]
+
+    async def test_non_dict_count_unread_and_data_are_tolerated(self) -> None:
+        """A non-dict ``count_unread`` or ``data`` value falls back to batch size."""
+        node = workflow.FormatDigestNode(name="format_digest")
+        base_escape_titles = {"result": [{"_id": "a1", "title": "T"}]}
+
+        state_bad_count_unread = State(
+            {
+                "node_results": {
+                    "escape_titles": base_escape_titles,
+                    "count_unread": "oops",
+                }
+            }
+        )
+        result = await node.run(state_bad_count_unread, {})
+        assert "Unread count: 0" in result["content"]
+
+        state_bad_data = State(
+            {
+                "node_results": {
+                    "escape_titles": base_escape_titles,
+                    "count_unread": {"data": "oops"},
+                }
+            }
+        )
+        result = await node.run(state_bad_data, {})
+        assert "Unread count: 0" in result["content"]
+
+        state_non_int_result = State(
+            {
+                "node_results": {
+                    "escape_titles": base_escape_titles,
+                    "count_unread": {"data": {"result": "not-an-int"}},
+                }
+            }
+        )
+        result = await node.run(state_non_int_result, {})
+        assert "Unread count: 0" in result["content"]
+
+    async def test_unread_count_is_clamped_to_zero(self) -> None:
+        """Unread count never goes negative if the DB count lags the batch."""
+        node = workflow.FormatDigestNode(name="format_digest")
+        state = State(
+            {
+                "node_results": {
+                    "escape_titles": {
+                        "result": [
+                            {"_id": "a1", "title": "A"},
+                            {"_id": "a2", "title": "B"},
+                        ]
+                    },
+                    "count_unread": {"data": {"result": 1}},
+                }
+            }
+        )
+
+        result = await node.run(state, {})
+
+        assert "Unread count: 0" in result["content"]
 
 
 class TestResolveTargetChatNode:
@@ -182,6 +245,7 @@ async def test_orcheo_workflow_builds_the_digest_pipeline() -> None:
         "cron_trigger",
         "telegram_listener",
         "find_unread",
+        "count_unread",
         "escape_titles",
         "format_digest",
         "resolve_target",
@@ -191,7 +255,8 @@ async def test_orcheo_workflow_builds_the_digest_pipeline() -> None:
     assert graph.edges == {
         (START, "detect_trigger"),
         ("cron_trigger", "find_unread"),
-        ("find_unread", "escape_titles"),
+        ("find_unread", "count_unread"),
+        ("count_unread", "escape_titles"),
         ("escape_titles", "format_digest"),
         ("resolve_target", "send_news"),
         ("send_news", "mark_read"),
