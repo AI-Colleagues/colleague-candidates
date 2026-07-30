@@ -65,35 +65,34 @@ class DetectTriggerNode(CodeNode):
 class FormatDigestNode(CodeNode):
     """Format the latest unread RSS news items into a digest message."""
 
-    @staticmethod
-    def _extract_items(results: dict) -> list:
-        """Return the escaped RSS items list, tolerating malformed state."""
-        html_result = results.get("escape_titles", {})
-        if not isinstance(html_result, dict):
-            return []
-        data = html_result.get("result")
-        return data if isinstance(data, list) else []
-
-    @staticmethod
-    def _resolve_unread_count(results: dict, delivered_count: int) -> int:
-        """Return the unread count remaining once this batch is delivered."""
-        count_result = results.get("count_unread", {})
-        if not isinstance(count_result, dict):
-            return 0
-        count_data = count_result.get("data", {})
-        if not isinstance(count_data, dict):
-            return 0
-        total_unread = count_data.get("result")
-        if not isinstance(total_unread, int):
-            total_unread = delivered_count
-        return max(total_unread - delivered_count, 0)
-
-    async def run(self, state, config):
+    async def run(self, state, config):  # noqa: C901
         """Return the digest content string and the delivered item IDs."""
+
+        def _extract_items(results: dict) -> list:
+            """Return the escaped RSS items list, tolerating malformed state."""
+            html_result = results.get("escape_titles", {})
+            if not isinstance(html_result, dict):
+                return []
+            data = html_result.get("result")
+            return data if isinstance(data, list) else []
+
+        def _resolve_unread_count(results: dict, delivered_count: int) -> int:
+            """Return the unread count remaining once this batch is delivered."""
+            count_result = results.get("count_unread", {})
+            if not isinstance(count_result, dict):
+                return 0
+            count_data = count_result.get("data", {})
+            if not isinstance(count_data, dict):
+                return 0
+            total_unread = count_data.get("result")
+            if not isinstance(total_unread, int):
+                total_unread = delivered_count
+            return max(total_unread - delivered_count, 0)
+
         results = state.get("node_results", {})
         if not isinstance(results, dict):
             results = {}
-        items = self._extract_items(results)
+        items = _extract_items(results)
 
         lines = []
         ids = []
@@ -113,7 +112,7 @@ class FormatDigestNode(CodeNode):
                 lines.append("- " + str(title))
 
         content = "\n".join(lines) if lines else "No news updates today."
-        unread_count = self._resolve_unread_count(results, len(ids))
+        unread_count = _resolve_unread_count(results, len(ids))
 
         return {
             "content": (
